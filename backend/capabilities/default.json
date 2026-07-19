@@ -1,0 +1,15 @@
+{
+  "identifier": "default",
+  "description": "Default capabilities for SnapShot",
+  "windows": ["main"],
+  "permissions": [
+    "core:default",
+    "global-shortcut:default",
+    "global-shortcut:allow-register",
+    "global-shortcut:allow-unregister",
+    "global-shortcut:allow-is-registered",
+    "clipboard-manager:default",
+    "clipboard-manager:allow-write-image",
+    "clipboard-manager:allow-write-text"
+  ]
+}
