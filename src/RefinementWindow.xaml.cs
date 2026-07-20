@@ -31,6 +31,7 @@ public partial class RefinementWindow : Window
     private double _startScrollX;
     private double _startScrollY;
     private System.Windows.Point _startMousePos;
+    private System.Windows.Media.Brush? _checkerboardBrush;
 
     [System.Runtime.InteropServices.DllImport("gdi32.dll")]
     [return: System.Runtime.InteropServices.MarshalAs(System.Runtime.InteropServices.UnmanagedType.Bool)]
@@ -47,6 +48,7 @@ public partial class RefinementWindow : Window
 
     private async void Window_Loaded(object sender, RoutedEventArgs e)
     {
+        _checkerboardBrush = ImageScrollViewer.Background;
         // 1. Instantly display the original capture while AI is processing
         PreviewImage.Source = ConvertBitmap(_rawCapture);
 
@@ -138,9 +140,9 @@ public partial class RefinementWindow : Window
         bool anyChecked = restoreChecked || removeChecked;
 
         BrushSizeContainer.Visibility = anyChecked ? Visibility.Visible : Visibility.Collapsed;
-        BackgroundOriginalImage.Visibility = anyChecked ? Visibility.Visible : Visibility.Collapsed;
+        BackgroundOriginalImage.Visibility = restoreChecked ? Visibility.Visible : Visibility.Collapsed;
 
-        if (anyChecked && BackgroundOriginalImage.Source == null)
+        if (restoreChecked && BackgroundOriginalImage.Source == null)
         {
             BackgroundOriginalImage.Source = ConvertBitmap(_rawCapture);
         }
@@ -598,6 +600,54 @@ public partial class RefinementWindow : Window
             ImageScrollViewer.ReleaseMouseCapture();
             e.Handled = true;
         }
+    }
+
+    private void BgGridButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (_checkerboardBrush != null)
+        {
+            ImageScrollViewer.Background = _checkerboardBrush;
+        }
+    }
+
+    private void BgWhiteButton_Click(object sender, RoutedEventArgs e)
+    {
+        ImageScrollViewer.Background = System.Windows.Media.Brushes.White;
+    }
+
+    private void BgBlackButton_Click(object sender, RoutedEventArgs e)
+    {
+        ImageScrollViewer.Background = System.Windows.Media.Brushes.Black;
+    }
+
+    protected override void OnSourceInitialized(EventArgs e)
+    {
+        base.OnSourceInitialized(e);
+        HwndSource source = (HwndSource)PresentationSource.FromVisual(this);
+        source?.AddHook(WndProc);
+    }
+
+    private IntPtr WndProc(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled)
+    {
+        const int WM_MOUSEHWHEEL = 0x020E;
+        if (msg == WM_MOUSEHWHEEL)
+        {
+            short delta = (short)((((long)wParam) >> 16) & 0xFFFF);
+            if (delta > 0)
+            {
+                ImageScrollViewer.LineRight();
+                ImageScrollViewer.LineRight();
+                ImageScrollViewer.LineRight();
+            }
+            else if (delta < 0)
+            {
+                ImageScrollViewer.LineLeft();
+                ImageScrollViewer.LineLeft();
+                ImageScrollViewer.LineLeft();
+            }
+            handled = true;
+        }
+        return IntPtr.Zero;
     }
 
     // Helper method to safely convert a GDI Bitmap to a WPF ImageSource without leaks

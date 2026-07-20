@@ -100,59 +100,72 @@
             <RowDefinition Height="Auto"/>   <!-- Action Buttons -->
         </Grid.RowDefinitions>
 
-        <!-- 1. Sunken Image Preview Box -->
-        <Border Grid.Row="0" BorderBrush="#808080" BorderThickness="1,1,0,0" SnapsToDevicePixels="True" Margin="0,0,0,12">
-            <Border BorderBrush="#000000" BorderThickness="1,1,0,0">
-                <Border BorderBrush="#FFFFFF" BorderThickness="0,0,1,1">
-                    <Border BorderBrush="#D4D0C8" BorderThickness="0,0,1,1">
-                        <!-- Scrollable Checkerboard container -->
-                        <ScrollViewer x:Name="ImageScrollViewer" 
-                                      HorizontalScrollBarVisibility="Hidden" 
-                                      VerticalScrollBarVisibility="Hidden"
-                                      Focusable="False" 
-                                      PanningMode="Both"
-                                      PreviewMouseWheel="ImageScrollViewer_PreviewMouseWheel"
-                                      MouseDown="ImageScrollViewer_MouseDown"
-                                      MouseMove="ImageScrollViewer_MouseMove"
-                                      MouseUp="ImageScrollViewer_MouseUp">
-                            <ScrollViewer.Background>
-                                <DrawingBrush TileMode="Tile" Viewport="0,0,16,16" ViewportUnits="Absolute">
-                                    <DrawingBrush.Drawing>
-                                        <DrawingGroup>
-                                            <GeometryDrawing Brush="#FFFFFF">
-                                                <GeometryDrawing.Geometry>
-                                                    <RectangleGeometry Rect="0,0,16,16"/>
-                                                </GeometryDrawing.Geometry>
-                                            </GeometryDrawing>
-                                            <GeometryDrawing Brush="#E0E0E0">
-                                                <GeometryDrawing.Geometry>
-                                                    <GeometryGroup>
-                                                        <RectangleGeometry Rect="0,0,8,8"/>
-                                                        <RectangleGeometry Rect="8,8,8,8"/>
-                                                    </GeometryGroup>
-                                                </GeometryDrawing.Geometry>
-                                            </GeometryDrawing>
-                                        </DrawingGroup>
-                                    </DrawingBrush.Drawing>
-                                </DrawingBrush>
-                            </ScrollViewer.Background>
+        <!-- 1. Sunken Image Preview Box with Floating Background Selectors -->
+        <Grid Grid.Row="0" Margin="0,0,0,12">
+            <Border BorderBrush="#808080" BorderThickness="1,1,0,0" SnapsToDevicePixels="True">
+                <Border BorderBrush="#000000" BorderThickness="1,1,0,0">
+                    <Border BorderBrush="#FFFFFF" BorderThickness="0,0,1,1">
+                        <Border BorderBrush="#D4D0C8" BorderThickness="0,0,1,1">
+                            <!-- Scrollable Checkerboard container -->
+                            <ScrollViewer x:Name="ImageScrollViewer" 
+                                          HorizontalScrollBarVisibility="Hidden" 
+                                          VerticalScrollBarVisibility="Hidden"
+                                          Focusable="False" 
+                                          PanningMode="Both"
+                                          PreviewMouseWheel="ImageScrollViewer_PreviewMouseWheel"
+                                          MouseDown="ImageScrollViewer_MouseDown"
+                                          MouseMove="ImageScrollViewer_MouseMove"
+                                          MouseUp="ImageScrollViewer_MouseUp">
+                                <ScrollViewer.Background>
+                                    <DrawingBrush TileMode="Tile" Viewport="0,0,16,16" ViewportUnits="Absolute">
+                                        <DrawingBrush.Drawing>
+                                            <DrawingGroup>
+                                                <GeometryDrawing Brush="#FFFFFF">
+                                                    <GeometryDrawing.Geometry>
+                                                        <RectangleGeometry Rect="0,0,16,16"/>
+                                                    </GeometryDrawing.Geometry>
+                                                </GeometryDrawing>
+                                                <GeometryDrawing Brush="#E0E0E0">
+                                                    <GeometryDrawing.Geometry>
+                                                        <GeometryGroup>
+                                                            <RectangleGeometry Rect="0,0,8,8"/>
+                                                            <RectangleGeometry Rect="8,8,8,8"/>
+                                                        </GeometryGroup>
+                                                    </GeometryDrawing.Geometry>
+                                                </GeometryDrawing>
+                                            </DrawingGroup>
+                                        </DrawingBrush.Drawing>
+                                    </DrawingBrush>
+                                </ScrollViewer.Background>
 
-                            <Grid x:Name="ImageContainerGrid" RenderTransformOrigin="0.5,0.5">
-                                <Grid.LayoutTransform>
-                                    <TransformGroup>
-                                        <ScaleTransform x:Name="ImageScaleTransform" ScaleX="1.0" ScaleY="1.0"/>
-                                    </TransformGroup>
-                                </Grid.LayoutTransform>
+                                <Grid x:Name="ImageContainerGrid" RenderTransformOrigin="0.5,0.5">
+                                    <Grid.LayoutTransform>
+                                        <TransformGroup>
+                                            <ScaleTransform x:Name="ImageScaleTransform" ScaleX="1.0" ScaleY="1.0"/>
+                                        </TransformGroup>
+                                    </Grid.LayoutTransform>
 
-                                <Image x:Name="BackgroundOriginalImage" Stretch="Uniform" Margin="10" Opacity="0.3" Visibility="Collapsed"/>
-                                <Image x:Name="PreviewImage" Stretch="Uniform" Margin="10" RenderOptions.BitmapScalingMode="HighQuality"
-                                       MouseDown="PreviewImage_MouseDown" MouseMove="PreviewImage_MouseMove" MouseUp="PreviewImage_MouseUp"/>
-                            </Grid>
-                        </ScrollViewer>
+                                    <Image x:Name="BackgroundOriginalImage" Stretch="Uniform" Margin="10" Opacity="0.3" Visibility="Collapsed"/>
+                                    <Image x:Name="PreviewImage" Stretch="Uniform" Margin="10" RenderOptions.BitmapScalingMode="HighQuality"
+                                           MouseDown="PreviewImage_MouseDown" MouseMove="PreviewImage_MouseMove" MouseUp="PreviewImage_MouseUp"/>
+                                </Grid>
+                            </ScrollViewer>
+                        </Border>
                     </Border>
                 </Border>
             </Border>
-        </Border>
+
+            <!-- Floating Window 95 Background Selectors in Top Right -->
+            <Border BorderBrush="#FFFFFF" BorderThickness="1,1,0,0" Background="#D4D0C8" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="6" SnapsToDevicePixels="True" Panel.ZIndex="10">
+                <Border BorderBrush="#808080" BorderThickness="0,0,1,1" Padding="3">
+                    <StackPanel Orientation="Horizontal">
+                        <Button x:Name="BgGridButton" Content="🏁" Width="22" Height="22" Click="BgGridButton_Click" Margin="0,0,3,0"/>
+                        <Button x:Name="BgWhiteButton" Content="⬜" Width="22" Height="22" Click="BgWhiteButton_Click" Margin="0,0,3,0"/>
+                        <Button x:Name="BgBlackButton" Content="⬛" Width="22" Height="22" Click="BgBlackButton_Click"/>
+                    </StackPanel>
+                </Border>
+            </Border>
+        </Grid>
 
         <!-- 2. Retro GroupBox / Frame for Settings -->
         <Border Grid.Row="1" BorderBrush="#808080" BorderThickness="1,1,0,0" SnapsToDevicePixels="True" Margin="0,0,0,12">
@@ -187,23 +200,22 @@
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
                         <TextBlock Grid.Column="0" Text="Brush Size" FontFamily="MS Sans Serif, Tahoma" FontSize="11" VerticalAlignment="Center" Margin="0,0,8,0"/>
-                        <Slider Grid.Column="1" x:Name="BrushSizeSlider" Minimum="5" Maximum="60" Value="15" 
-                                TickFrequency="5" IsSnapToTickEnabled="True" ValueChanged="BrushSizeSlider_ValueChanged" VerticalAlignment="Center"/>
-                        <TextBlock Grid.Column="2" x:Name="BrushSizeText" Text="15 px" FontFamily="MS Sans Serif, Tahoma" FontSize="11" VerticalAlignment="Center" Margin="8,0,0,0" Width="40"/>
+                        <Slider Grid.Column="1" x:Name="BrushSizeSlider" Minimum="1" Maximum="60" Value="10" 
+                                TickFrequency="1" IsSnapToTickEnabled="True" ValueChanged="BrushSizeSlider_ValueChanged" VerticalAlignment="Center"/>
+                        <TextBlock Grid.Column="2" x:Name="BrushSizeText" Text="10 px" FontFamily="MS Sans Serif, Tahoma" FontSize="11" VerticalAlignment="Center" Margin="8,0,0,0" Width="40"/>
                     </Grid>
                 </StackPanel>
             </Border>
         </Border>
 
-        <!-- 3. Action Buttons (Undo, Redo, Okay, Cancel) -->
+        <!-- 3. Action Buttons (Undo, Redo, Okay) -->
         <Grid Grid.Row="2">
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Left">
                 <Button x:Name="UndoButton" Content="Undo" Click="UndoButton_Click" Margin="0,0,8,0" IsEnabled="False"/>
                 <Button x:Name="RedoButton" Content="Redo" Click="RedoButton_Click" IsEnabled="False"/>
             </StackPanel>
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                <Button Content="Okay" IsDefault="True" Click="OkayButton_Click" Margin="0,0,8,0"/>
-                <Button Content="Cancel" IsCancel="True" Click="CancelButton_Click"/>
+                <Button Content="Okay" IsDefault="True" Click="OkayButton_Click"/>
             </StackPanel>
         </Grid>
     </Grid>
