@@ -24,6 +24,14 @@ public partial class RefinementWindow : Window
     private readonly System.Collections.Generic.Stack<byte[]> _undoStack = new();
     private readonly System.Collections.Generic.Stack<byte[]> _redoStack = new();
 
+    // Zoom & Pan state variables
+    private double _zoomLevel = 1.0;
+    private bool _isSpacePressed = false;
+    private bool _isPanning = false;
+    private double _startScrollX;
+    private double _startScrollY;
+    private System.Windows.Point _startMousePos;
+
     [System.Runtime.InteropServices.DllImport("gdi32.dll")]
     [return: System.Runtime.InteropServices.MarshalAs(System.Runtime.InteropServices.UnmanagedType.Bool)]
     private static extern bool DeleteObject(IntPtr hObject);
@@ -150,7 +158,7 @@ public partial class RefinementWindow : Window
 
     private void PreviewImage_MouseDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
     {
-        if (_isPreparing || e.LeftButton != System.Windows.Input.MouseButtonState.Pressed)
+        if (_isPreparing || e.LeftButton != System.Windows.Input.MouseButtonState.Pressed || _isSpacePressed)
             return;
 
         bool isRestore = RestoreBrushCheckBox.IsChecked == true;
@@ -462,6 +470,132 @@ public partial class RefinementWindow : Window
         else if (e.Key == System.Windows.Input.Key.Y && (System.Windows.Input.Keyboard.Modifiers & System.Windows.Input.ModifierKeys.Control) == System.Windows.Input.ModifierKeys.Control)
         {
             PerformRedo();
+            e.Handled = true;
+        }
+        else if (e.Key == System.Windows.Input.Key.OemPlus || e.Key == System.Windows.Input.Key.Add)
+        {
+            if ((System.Windows.Input.Keyboard.Modifiers & System.Windows.Input.ModifierKeys.Control) == System.Windows.Input.ModifierKeys.Control)
+            {
+                ZoomIn();
+                e.Handled = true;
+            }
+        }
+        else if (e.Key == System.Windows.Input.Key.OemMinus || e.Key == System.Windows.Input.Key.Subtract)
+        {
+            if ((System.Windows.Input.Keyboard.Modifiers & System.Windows.Input.ModifierKeys.Control) == System.Windows.Input.ModifierKeys.Control)
+            {
+                ZoomOut();
+                e.Handled = true;
+            }
+        }
+        else if (e.Key == System.Windows.Input.Key.Space && !e.IsRepeat)
+        {
+            _isSpacePressed = true;
+            this.Cursor = System.Windows.Input.Cursors.Hand;
+            e.Handled = true;
+        }
+        else if (e.Key == System.Windows.Input.Key.Left)
+        {
+            ImageScrollViewer.LineLeft();
+            e.Handled = true;
+        }
+        else if (e.Key == System.Windows.Input.Key.Right)
+        {
+            ImageScrollViewer.LineRight();
+            e.Handled = true;
+        }
+        else if (e.Key == System.Windows.Input.Key.Up)
+        {
+            ImageScrollViewer.LineUp();
+            e.Handled = true;
+        }
+        else if (e.Key == System.Windows.Input.Key.Down)
+        {
+            ImageScrollViewer.LineDown();
+            e.Handled = true;
+        }
+    }
+
+    private void Window_KeyUp(object sender, System.Windows.Input.KeyEventArgs e)
+    {
+        if (e.Key == System.Windows.Input.Key.Space)
+        {
+            _isSpacePressed = false;
+            _isPanning = false;
+            if (ImageScrollViewer.IsMouseCaptured)
+            {
+                ImageScrollViewer.ReleaseMouseCapture();
+            }
+            this.Cursor = System.Windows.Input.Cursors.Arrow;
+            e.Handled = true;
+        }
+    }
+
+    private void ZoomIn()
+    {
+        _zoomLevel = Math.Min(_zoomLevel + 0.15, 4.0); // max 400%
+        ImageScaleTransform.ScaleX = _zoomLevel;
+        ImageScaleTransform.ScaleY = _zoomLevel;
+    }
+
+    private void ZoomOut()
+    {
+        _zoomLevel = Math.Max(_zoomLevel - 0.15, 0.5); // min 50%
+        ImageScaleTransform.ScaleX = _zoomLevel;
+        ImageScaleTransform.ScaleY = _zoomLevel;
+    }
+
+    private void ImageScrollViewer_PreviewMouseWheel(object sender, System.Windows.Input.MouseWheelEventArgs e)
+    {
+        if ((System.Windows.Input.Keyboard.Modifiers & System.Windows.Input.ModifierKeys.Control) == System.Windows.Input.ModifierKeys.Control)
+        {
+            if (e.Delta > 0) ZoomIn();
+            else ZoomOut();
+            e.Handled = true;
+        }
+        else if ((System.Windows.Input.Keyboard.Modifiers & System.Windows.Input.ModifierKeys.Shift) == System.Windows.Input.ModifierKeys.Shift)
+        {
+            if (e.Delta > 0) ImageScrollViewer.LineLeft();
+            else ImageScrollViewer.LineRight();
+            e.Handled = true;
+        }
+    }
+
+    private void ImageScrollViewer_MouseDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
+    {
+        bool isMiddleClick = e.ChangedButton == System.Windows.Input.MouseButton.Middle;
+        bool isSpaceLeftClick = e.ChangedButton == System.Windows.Input.MouseButton.Left && _isSpacePressed;
+
+        if (isMiddleClick || isSpaceLeftClick)
+        {
+            _isPanning = true;
+            _startScrollX = ImageScrollViewer.HorizontalOffset;
+            _startScrollY = ImageScrollViewer.VerticalOffset;
+            _startMousePos = e.GetPosition(ImageScrollViewer);
+            ImageScrollViewer.CaptureMouse();
+            e.Handled = true;
+        }
+    }
+
+    private void ImageScrollViewer_MouseMove(object sender, System.Windows.Input.MouseEventArgs e)
+    {
+        if (_isPanning && ImageScrollViewer.IsMouseCaptured)
+        {
+            var currentPos = e.GetPosition(ImageScrollViewer);
+            double dx = currentPos.X - _startMousePos.X;
+            double dy = currentPos.Y - _startMousePos.Y;
+            ImageScrollViewer.ScrollToHorizontalOffset(_startScrollX - dx);
+            ImageScrollViewer.ScrollToVerticalOffset(_startScrollY - dy);
+            e.Handled = true;
+        }
+    }
+
+    private void ImageScrollViewer_MouseUp(object sender, System.Windows.Input.MouseButtonEventArgs e)
+    {
+        if (_isPanning)
+        {
+            _isPanning = false;
+            ImageScrollViewer.ReleaseMouseCapture();
             e.Handled = true;
         }
     }

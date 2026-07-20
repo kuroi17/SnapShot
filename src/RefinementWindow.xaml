@@ -10,6 +10,7 @@
         Background="#D4D0C8"
         WindowStyle="ThreeDBorderWindow"
         KeyDown="Window_KeyDown"
+        KeyUp="Window_KeyUp"
         Loaded="Window_Loaded">
 
     <Window.Resources>
@@ -104,9 +105,17 @@
             <Border BorderBrush="#000000" BorderThickness="1,1,0,0">
                 <Border BorderBrush="#FFFFFF" BorderThickness="0,0,1,1">
                     <Border BorderBrush="#D4D0C8" BorderThickness="0,0,1,1">
-                        <!-- Checkerboard container -->
-                        <Grid>
-                            <Grid.Background>
+                        <!-- Scrollable Checkerboard container -->
+                        <ScrollViewer x:Name="ImageScrollViewer" 
+                                      HorizontalScrollBarVisibility="Hidden" 
+                                      VerticalScrollBarVisibility="Hidden"
+                                      Focusable="False" 
+                                      PanningMode="Both"
+                                      PreviewMouseWheel="ImageScrollViewer_PreviewMouseWheel"
+                                      MouseDown="ImageScrollViewer_MouseDown"
+                                      MouseMove="ImageScrollViewer_MouseMove"
+                                      MouseUp="ImageScrollViewer_MouseUp">
+                            <ScrollViewer.Background>
                                 <DrawingBrush TileMode="Tile" Viewport="0,0,16,16" ViewportUnits="Absolute">
                                     <DrawingBrush.Drawing>
                                         <DrawingGroup>
@@ -126,13 +135,20 @@
                                         </DrawingGroup>
                                     </DrawingBrush.Drawing>
                                 </DrawingBrush>
-                            </Grid.Background>
-                                                       <Grid>
+                            </ScrollViewer.Background>
+
+                            <Grid x:Name="ImageContainerGrid" RenderTransformOrigin="0.5,0.5">
+                                <Grid.LayoutTransform>
+                                    <TransformGroup>
+                                        <ScaleTransform x:Name="ImageScaleTransform" ScaleX="1.0" ScaleY="1.0"/>
+                                    </TransformGroup>
+                                </Grid.LayoutTransform>
+
                                 <Image x:Name="BackgroundOriginalImage" Stretch="Uniform" Margin="10" Opacity="0.3" Visibility="Collapsed"/>
                                 <Image x:Name="PreviewImage" Stretch="Uniform" Margin="10" RenderOptions.BitmapScalingMode="HighQuality"
                                        MouseDown="PreviewImage_MouseDown" MouseMove="PreviewImage_MouseMove" MouseUp="PreviewImage_MouseUp"/>
                             </Grid>
-                        </Grid>
+                        </ScrollViewer>
                     </Border>
                 </Border>
             </Border>
