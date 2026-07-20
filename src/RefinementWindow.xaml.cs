@@ -19,7 +19,10 @@ public partial class RefinementWindow : Window
     private Bitmap? _processedBitmap;
     private CancellationTokenSource? _updateCts;
     private bool _isPreparing = true;
-    private bool[]? _manualRestoreMask;
+    private byte[]? _manualMaskOverrides;
+
+    private readonly System.Collections.Generic.Stack<byte[]> _undoStack = new();
+    private readonly System.Collections.Generic.Stack<byte[]> _redoStack = new();
 
     [System.Runtime.InteropServices.DllImport("gdi32.dll")]
     [return: System.Runtime.InteropServices.MarshalAs(System.Runtime.InteropServices.UnmanagedType.Bool)]
@@ -43,17 +46,19 @@ public partial class RefinementWindow : Window
         ThresholdSlider.IsEnabled = false;
         RemoveBgCheckBox.IsEnabled = false;
         RestoreBrushCheckBox.IsEnabled = false;
+        RemoveBrushCheckBox.IsEnabled = false;
 
         try
         {
             // Run u2netp and guided filter on a background thread
             _removalState = await Task.Run(() => _bgService.Prepare(_rawCapture));
-            _manualRestoreMask = new bool[_rawCapture.Width * _rawCapture.Height];
+            _manualMaskOverrides = new byte[_rawCapture.Width * _rawCapture.Height];
             _isPreparing = false;
             
             ThresholdSlider.IsEnabled = true;
             RemoveBgCheckBox.IsEnabled = true;
             RestoreBrushCheckBox.IsEnabled = true;
+            RemoveBrushCheckBox.IsEnabled = true;
 
             // Trigger the initial background-removed preview
             UpdatePreview();
@@ -82,17 +87,14 @@ public partial class RefinementWindow : Window
         {
             SliderContainer.Visibility = Visibility.Visible;
             RestoreBrushCheckBox.Visibility = Visibility.Visible;
-            if (RestoreBrushCheckBox.IsChecked == true)
-            {
-                BrushSizeContainer.Visibility = Visibility.Visible;
-                BackgroundOriginalImage.Visibility = Visibility.Visible;
-            }
-            UpdatePreview();
+            RemoveBrushCheckBox.Visibility = Visibility.Visible;
+            SyncBrushUI();
         }
         else
         {
             SliderContainer.Visibility = Visibility.Collapsed;
             RestoreBrushCheckBox.Visibility = Visibility.Collapsed;
+            RemoveBrushCheckBox.Visibility = Visibility.Collapsed;
             BrushSizeContainer.Visibility = Visibility.Collapsed;
             BackgroundOriginalImage.Visibility = Visibility.Collapsed;
             PreviewImage.Source = ConvertBitmap(_rawCapture);
@@ -101,14 +103,36 @@ public partial class RefinementWindow : Window
 
     private void RestoreBrushCheckBox_Changed(object sender, RoutedEventArgs e)
     {
-        if (_isPreparing)
-            return;
+        if (_isPreparing) return;
 
-        bool isChecked = RestoreBrushCheckBox.IsChecked == true;
-        BrushSizeContainer.Visibility = isChecked ? Visibility.Visible : Visibility.Collapsed;
-        BackgroundOriginalImage.Visibility = isChecked ? Visibility.Visible : Visibility.Collapsed;
+        if (RestoreBrushCheckBox.IsChecked == true)
+        {
+            RemoveBrushCheckBox.IsChecked = false;
+        }
+        SyncBrushUI();
+    }
 
-        if (isChecked && BackgroundOriginalImage.Source == null)
+    private void RemoveBrushCheckBox_Changed(object sender, RoutedEventArgs e)
+    {
+        if (_isPreparing) return;
+
+        if (RemoveBrushCheckBox.IsChecked == true)
+        {
+            RestoreBrushCheckBox.IsChecked = false;
+        }
+        SyncBrushUI();
+    }
+
+    private void SyncBrushUI()
+    {
+        bool restoreChecked = RestoreBrushCheckBox.IsChecked == true;
+        bool removeChecked = RemoveBrushCheckBox.IsChecked == true;
+        bool anyChecked = restoreChecked || removeChecked;
+
+        BrushSizeContainer.Visibility = anyChecked ? Visibility.Visible : Visibility.Collapsed;
+        BackgroundOriginalImage.Visibility = anyChecked ? Visibility.Visible : Visibility.Collapsed;
+
+        if (anyChecked && BackgroundOriginalImage.Source == null)
         {
             BackgroundOriginalImage.Source = ConvertBitmap(_rawCapture);
         }
@@ -126,12 +150,19 @@ public partial class RefinementWindow : Window
 
     private void PreviewImage_MouseDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
     {
-        if (_isPreparing || RestoreBrushCheckBox.IsChecked == false || e.LeftButton != System.Windows.Input.MouseButtonState.Pressed)
+        if (_isPreparing || e.LeftButton != System.Windows.Input.MouseButtonState.Pressed)
             return;
+
+        bool isRestore = RestoreBrushCheckBox.IsChecked == true;
+        bool isRemove = RemoveBrushCheckBox.IsChecked == true;
+        if (!isRestore && !isRemove)
+            return;
+
+        // Save state to Undo stack before drawing begins
+        PushUndo();
 
         PreviewImage.CaptureMouse();
         PaintRestoreStroke(e.GetPosition(PreviewImage));
-        UpdatePreview();
     }
 
     private void PreviewImage_MouseMove(object sender, System.Windows.Input.MouseEventArgs e)
@@ -140,7 +171,6 @@ public partial class RefinementWindow : Window
             return;
 
         PaintRestoreStroke(e.GetPosition(PreviewImage));
-        UpdatePreview();
     }
 
     private void PreviewImage_MouseUp(object sender, System.Windows.Input.MouseButtonEventArgs e)
@@ -155,7 +185,7 @@ public partial class RefinementWindow : Window
     {
         double controlW = PreviewImage.ActualWidth;
         double controlH = PreviewImage.ActualHeight;
-        if (controlW == 0 || controlH == 0 || _rawCapture == null || _manualRestoreMask == null)
+        if (controlW == 0 || controlH == 0 || _rawCapture == null || _manualMaskOverrides == null || _processedBitmap == null)
             return;
 
         double imageW = _rawCapture.Width;
@@ -180,8 +210,11 @@ public partial class RefinementWindow : Window
         int W = (int)imageW;
         int H = (int)imageH;
         int r = (int)BrushSizeSlider.Value;
+        byte brushMode = RestoreBrushCheckBox.IsChecked == true ? (byte)1 : (byte)2;
 
-        // Draw a circle of radius 'r' in the manual restore mask
+        bool changed = false;
+
+        // Draw a circle of radius 'r' in the manual mask overrides
         for (int dy = -r; dy <= r; dy++)
         {
             int py = centerY + dy;
@@ -194,9 +227,65 @@ public partial class RefinementWindow : Window
 
                 if (dx * dx + dy * dy <= r * r)
                 {
-                    _manualRestoreMask[py * W + px] = true;
+                    int idx = py * W + px;
+                    if (_manualMaskOverrides[idx] != brushMode)
+                    {
+                        _manualMaskOverrides[idx] = brushMode;
+                        changed = true;
+                    }
                 }
             }
+        }
+
+        if (changed)
+        {
+            // Directly write to the displayed preview bitmap buffer for instant, lag-free painting!
+            BitmapData pd = _processedBitmap.LockBits(new Rectangle(0, 0, W, H), ImageLockMode.ReadWrite, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
+            BitmapData sd = _rawCapture.LockBits(new Rectangle(0, 0, W, H), ImageLockMode.ReadOnly, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
+
+            unsafe
+            {
+                byte* p = (byte*)pd.Scan0;
+                byte* s = (byte*)sd.Scan0;
+
+                for (int dy = -r; dy <= r; dy++)
+                {
+                    int py = centerY + dy;
+                    if (py < 0 || py >= H) continue;
+
+                    for (int dx = -r; dx <= r; dx++)
+                    {
+                        int px = centerX + dx;
+                        if (px < 0 || px >= W) continue;
+
+                        if (dx * dx + dy * dy <= r * r)
+                        {
+                            int i = py * W + px;
+                            int bi = i * 4;
+                            if (brushMode == 1) // Restore original pixels
+                            {
+                                p[bi + 0] = s[bi + 0]; // B
+                                p[bi + 1] = s[bi + 1]; // G
+                                p[bi + 2] = s[bi + 2]; // R
+                                p[bi + 3] = 255;        // A
+                            }
+                            else // Remove pixels
+                            {
+                                p[bi + 0] = 0; // B
+                                p[bi + 1] = 0; // G
+                                p[bi + 2] = 0; // R
+                                p[bi + 3] = 0; // A
+                            }
+                        }
+                    }
+                }
+            }
+
+            _processedBitmap.UnlockBits(pd);
+            _rawCapture.UnlockBits(sd);
+
+            // Instantly render on the UI thread
+            PreviewImage.Source = ConvertBitmap(_processedBitmap);
         }
     }
 
@@ -219,8 +308,8 @@ public partial class RefinementWindow : Window
                 // Run threshold, sigmoid, and alpha application
                 Bitmap thresholded = _bgService.ApplyThreshold(_removalState, thresholdValue);
 
-                // Overlay the red manual restore mask for visual feedback
-                if (_manualRestoreMask != null && RestoreBrushCheckBox.Dispatcher.Invoke(() => RestoreBrushCheckBox.IsChecked == true))
+                // Overlay the manual restore/remove mask overrides
+                if (_manualMaskOverrides != null && (RestoreBrushCheckBox.Dispatcher.Invoke(() => RestoreBrushCheckBox.IsChecked == true || RemoveBrushCheckBox.IsChecked == true)))
                 {
                     int w = thresholded.Width;
                     int h = thresholded.Height;
@@ -233,13 +322,22 @@ public partial class RefinementWindow : Window
                         byte* s = (byte*)sd.Scan0;
                         for (int i = 0; i < w * h; i++)
                         {
-                            if (_manualRestoreMask[i])
+                            byte mode = _manualMaskOverrides[i];
+                            if (mode == 1) // Restore
                             {
                                 int byteIdx = i * 4;
-                                d[byteIdx + 0] = (byte)(s[byteIdx + 0] * 0.5f); // B
-                                d[byteIdx + 1] = (byte)(s[byteIdx + 1] * 0.5f); // G
-                                d[byteIdx + 2] = (byte)(s[byteIdx + 2] * 0.5f + 127.5f); // R (Red overlay blend)
-                                d[byteIdx + 3] = 255; // Fully opaque alpha
+                                d[byteIdx + 0] = s[byteIdx + 0]; // B
+                                d[byteIdx + 1] = s[byteIdx + 1]; // G
+                                d[byteIdx + 2] = s[byteIdx + 2]; // R
+                                d[byteIdx + 3] = 255;            // A
+                            }
+                            else if (mode == 2) // Remove
+                            {
+                                int byteIdx = i * 4;
+                                d[byteIdx + 0] = 0;
+                                d[byteIdx + 1] = 0;
+                                d[byteIdx + 2] = 0;
+                                d[byteIdx + 3] = 0;
                             }
                         }
                     }
@@ -275,51 +373,11 @@ public partial class RefinementWindow : Window
     private void OkayButton_Click(object sender, RoutedEventArgs e)
     {
         Bitmap finalBitmap;
-        if (RemoveBgCheckBox.IsChecked == true && _removalState != null)
+        if (RemoveBgCheckBox.IsChecked == true && _processedBitmap != null)
         {
-            int w = _rawCapture.Width;
-            int h = _rawCapture.Height;
-
-            // Generate clean thresholded bitmap (without red tint)
-            Bitmap cutout = _bgService.ApplyThreshold(_removalState, (float)ThresholdSlider.Value);
-            
-            // Build the final bitmap with manual restore overrides
-            finalBitmap = new Bitmap(w, h, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
-
-            BitmapData cd = cutout.LockBits(new Rectangle(0, 0, w, h), ImageLockMode.ReadOnly, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
-            BitmapData fd = finalBitmap.LockBits(new Rectangle(0, 0, w, h), ImageLockMode.WriteOnly, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
-            BitmapData sd = _rawCapture.LockBits(new Rectangle(0, 0, w, h), ImageLockMode.ReadOnly, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
-
-            unsafe
-            {
-                byte* c = (byte*)cd.Scan0;
-                byte* f = (byte*)fd.Scan0;
-                byte* s = (byte*)sd.Scan0;
-
-                for (int i = 0; i < w * h; i++)
-                {
-                    int bi = i * 4;
-                    if (_manualRestoreMask != null && _manualRestoreMask[i])
-                    {
-                        f[bi + 0] = s[bi + 0]; // B
-                        f[bi + 1] = s[bi + 1]; // G
-                        f[bi + 2] = s[bi + 2]; // R
-                        f[bi + 3] = 255;        // A
-                    }
-                    else
-                    {
-                        f[bi + 0] = c[bi + 0]; // B
-                        f[bi + 1] = c[bi + 1]; // G
-                        f[bi + 2] = c[bi + 2]; // R
-                        f[bi + 3] = c[bi + 3]; // A
-                    }
-                }
-            }
-
-            cutout.UnlockBits(cd);
-            finalBitmap.UnlockBits(fd);
-            _rawCapture.UnlockBits(sd);
-            cutout.Dispose();
+            // _processedBitmap contains the final correct cutout with all threshold and brush modifications.
+            // Clone it to copy to clipboard safely (avoiding dispose race conditions).
+            finalBitmap = (Bitmap)_processedBitmap.Clone();
         }
         else
         {
@@ -343,11 +401,68 @@ public partial class RefinementWindow : Window
         Close();
     }
 
+    // ── Undo / Redo Operations ──────────────────────────────────────────────
+
+    private void PushUndo()
+    {
+        if (_manualMaskOverrides == null) return;
+        byte[] copy = new byte[_manualMaskOverrides.Length];
+        Array.Copy(_manualMaskOverrides, copy, _manualMaskOverrides.Length);
+        _undoStack.Push(copy);
+        _redoStack.Clear();
+        UpdateUndoRedoButtons();
+    }
+
+    private void UpdateUndoRedoButtons()
+    {
+        UndoButton.IsEnabled = _undoStack.Count > 0;
+        RedoButton.IsEnabled = _redoStack.Count > 0;
+    }
+
+    private void PerformUndo()
+    {
+        if (_undoStack.Count == 0 || _manualMaskOverrides == null) return;
+
+        byte[] redoCopy = new byte[_manualMaskOverrides.Length];
+        Array.Copy(_manualMaskOverrides, redoCopy, _manualMaskOverrides.Length);
+        _redoStack.Push(redoCopy);
+
+        _manualMaskOverrides = _undoStack.Pop();
+        UpdateUndoRedoButtons();
+        UpdatePreview();
+    }
+
+    private void PerformRedo()
+    {
+        if (_redoStack.Count == 0 || _manualMaskOverrides == null) return;
+
+        byte[] undoCopy = new byte[_manualMaskOverrides.Length];
+        Array.Copy(_manualMaskOverrides, undoCopy, _manualMaskOverrides.Length);
+        _undoStack.Push(undoCopy);
+
+        _manualMaskOverrides = _redoStack.Pop();
+        UpdateUndoRedoButtons();
+        UpdatePreview();
+    }
+
+    private void UndoButton_Click(object sender, RoutedEventArgs e) => PerformUndo();
+    private void RedoButton_Click(object sender, RoutedEventArgs e) => PerformRedo();
+
     private void Window_KeyDown(object sender, System.Windows.Input.KeyEventArgs e)
     {
         if (e.Key == System.Windows.Input.Key.Escape)
         {
             CancelButton_Click(sender, e);
+        }
+        else if (e.Key == System.Windows.Input.Key.Z && (System.Windows.Input.Keyboard.Modifiers & System.Windows.Input.ModifierKeys.Control) == System.Windows.Input.ModifierKeys.Control)
+        {
+            PerformUndo();
+            e.Handled = true;
+        }
+        else if (e.Key == System.Windows.Input.Key.Y && (System.Windows.Input.Keyboard.Modifiers & System.Windows.Input.ModifierKeys.Control) == System.Windows.Input.ModifierKeys.Control)
+        {
+            PerformRedo();
+            e.Handled = true;
         }
     }
 

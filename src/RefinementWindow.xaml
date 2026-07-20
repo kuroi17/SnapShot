@@ -159,7 +159,10 @@
                         <TextBlock Grid.Column="2" Text="Clean Background" FontFamily="MS Sans Serif, Tahoma" FontSize="11" VerticalAlignment="Center" Margin="8,0,0,0"/>
                     </Grid>
 
-                    <CheckBox x:Name="RestoreBrushCheckBox" Content="Restore Brush (Eraser)" IsChecked="False" Checked="RestoreBrushCheckBox_Changed" Unchecked="RestoreBrushCheckBox_Changed" Margin="0,0,0,10" Visibility="Visible"/>
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                        <CheckBox x:Name="RestoreBrushCheckBox" Content="Restore Brush" IsChecked="False" Checked="RestoreBrushCheckBox_Changed" Unchecked="RestoreBrushCheckBox_Changed" Margin="0,0,20,0"/>
+                        <CheckBox x:Name="RemoveBrushCheckBox" Content="Remove Brush" IsChecked="False" Checked="RemoveBrushCheckBox_Changed" Unchecked="RemoveBrushCheckBox_Changed"/>
+                    </StackPanel>
 
                     <Grid x:Name="BrushSizeContainer" Margin="0,0,0,5" Visibility="Collapsed">
                         <Grid.ColumnDefinitions>
@@ -176,10 +179,16 @@
             </Border>
         </Border>
 
-        <!-- 3. OK / Cancel Buttons -->
-        <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right">
-            <Button Content="Okay" IsDefault="True" Click="OkayButton_Click" Margin="0,0,8,0"/>
-            <Button Content="Cancel" IsCancel="True" Click="CancelButton_Click"/>
-        </StackPanel>
+        <!-- 3. Action Buttons (Undo, Redo, Okay, Cancel) -->
+        <Grid Grid.Row="2">
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Left">
+                <Button x:Name="UndoButton" Content="Undo" Click="UndoButton_Click" Margin="0,0,8,0" IsEnabled="False"/>
+                <Button x:Name="RedoButton" Content="Redo" Click="RedoButton_Click" IsEnabled="False"/>
+            </StackPanel>
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                <Button Content="Okay" IsDefault="True" Click="OkayButton_Click" Margin="0,0,8,0"/>
+                <Button Content="Cancel" IsCancel="True" Click="CancelButton_Click"/>
+            </StackPanel>
+        </Grid>
     </Grid>
 </Window>
