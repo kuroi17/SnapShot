@@ -1,19 +1,50 @@
-# Rust / Cargo
-backend/target/
+# C# / .NET
+bin/
+obj/
+*.user
+*.suo
+.vs/
+*.rsuser
+*.DotSettings.user
 
-# Node.js
-frontend/node_modules/
-frontend/dist/
+# Build output
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+[Ww][Ii][Nn]32/
+[Aa][Rr][Mm]/
+[Aa][Rr][Mm]64/
+bld/
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+[Ll]ogs/
 
-# OS
+# NuGet
+*.nupkg
+*.snupkg
+.nuget/
+packages/
+!**/packages/repositories.config
+*.nuspec
+
+# Publish output
+publish/
+PublishOutput/
+
+# Test results
+TestResults/
+*.trx
+
+# OS / Editor
 .DS_Store
 Thumbs.db
-
-# IDE
-.vscode/
-.idea/
+Desktop.ini
 *.swp
-*.swo
+.idea/
+.vscode/
+*.code-workspace
 
-# Logs
-*.log
+# Temp / tools
+tools/
