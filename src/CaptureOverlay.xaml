@@ -9,7 +9,8 @@
         WindowState="Maximized"
         ShowInTaskbar="False"
         Cursor="Cross"
-        KeyDown="Window_KeyDown">
+        KeyDown="Window_KeyDown"
+        Focusable="True">
 
     <Grid>
         <!-- Dark overlay covering entire screen -->

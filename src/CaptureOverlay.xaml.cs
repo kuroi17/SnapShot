@@ -23,6 +23,11 @@ public partial class CaptureOverlay : Window
     public CaptureOverlay()
     {
         InitializeComponent();
+        this.Loaded += (s, e) =>
+        {
+            this.Activate();
+            this.Focus();
+        };
     }
 
     private void Canvas_MouseDown(object sender, MouseButtonEventArgs e)
