@@ -122,29 +122,35 @@ public partial class App : Application
     {
         _isCapturing = false;
 
-        Task.Run(() =>
+        // Must run on UI/STA thread to show the refinement modal window
+        Dispatcher.Invoke(() =>
         {
             try
             {
                 // 1. Capture screen region
-                using System.Drawing.Bitmap captured = ScreenCaptureService.Capture(region);
+                System.Drawing.Bitmap captured = ScreenCaptureService.Capture(region);
 
-                // 2. Remove background
-                using System.Drawing.Bitmap transparent = _bgRemoval!.RemoveBackground(captured);
+                // 2. Open Refinement Window as a modal
+                var refWindow = new RefinementWindow(captured, _bgRemoval!);
+                
+                // ShowDialog blocks and returns true/false/null
+                bool? result = refWindow.ShowDialog();
 
-                // 3. Copy to clipboard — must be on STA/UI thread
-                Dispatcher.Invoke(() =>
+                if (result == true)
                 {
-                    ClipboardService.CopyToClipboard(transparent);
-                    ShowTrayNotification("SnapShot",
-                        "Transparent image copied to clipboard ✓",
-                        WinForms.ToolTipIcon.Info);
-                });
+                    string msg = refWindow.IsBackgroundRemoved
+                        ? "Transparent image copied to clipboard ✓"
+                        : "Screenshot copied to clipboard ✓";
+
+                    ShowTrayNotification("SnapShot", msg, WinForms.ToolTipIcon.Info);
+                }
+
+                // Clean up the initial captured bitmap
+                captured.Dispose();
             }
             catch (Exception ex)
             {
-                Dispatcher.Invoke(() =>
-                    ShowTrayNotification("SnapShot — Error", ex.Message, WinForms.ToolTipIcon.Error));
+                ShowTrayNotification("SnapShot — Error", ex.Message, WinForms.ToolTipIcon.Error);
             }
         });
     }

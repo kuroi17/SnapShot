@@ -44,15 +44,22 @@ public sealed class BackgroundRemovalService : IDisposable
 
     public Bitmap RemoveBackground(Bitmap source)
     {
-        try   { return DoRemoveBackground(source); }
-        catch { return (Bitmap)source.Clone(); }
+        try
+        {
+            var state = Prepare(source);
+            return ApplyThreshold(state, 0.48f);
+        }
+        catch
+        {
+            return (Bitmap)source.Clone();
+        }
     }
 
-    // ══════════════════════════════════════════════════════════════════════
-    // Main pipeline
-    // ══════════════════════════════════════════════════════════════════════
-
-    private Bitmap DoRemoveBackground(Bitmap source)
+    /// <summary>
+    /// Runs ONNX inference, morphological close, and guided filtering ONCE
+    /// and returns a state containing the source image and the pre-sigmoid mask.
+    /// </summary>
+    public PreparedRemovalState Prepare(Bitmap source)
     {
         int W = source.Width, H = source.Height;
 
@@ -78,28 +85,34 @@ public sealed class BackgroundRemovalService : IDisposable
         mask = MorphClose(mask, W, H, closeR);
 
         // ── 6. COLOR guided filter ─────────────────────────────────────────
-        //   3-channel guide captures subtle colour differences that grayscale
-        //   loses (e.g. warm cream shirt vs cool white background).
         int gfR = Math.Clamp(Math.Max(W, H) / 60, 10, 40);
         mask = ColorGuidedFilter(gR, gG, gB, mask, W, H, gfR, eps: 0.015f);
 
+        return new PreparedRemovalState(source, mask, W, H);
+    }
+
+    /// <summary>
+    /// Applies a custom sigmoid threshold to a pre-calculated mask state
+    /// and returns the finalized cutout bitmap.
+    /// </summary>
+    public Bitmap ApplyThreshold(PreparedRemovalState state, float threshold)
+    {
+        int W = state.Width, H = state.Height;
+        float[] mask = new float[state.RefinedMask.Length];
+
         // ── 7. Sigmoid sharpening ─────────────────────────────────────────
-        //   Slope 14; centre shifted to 0.48 so the sigmoid is slightly more
-        //   aggressive at removing low-confidence bg (grass, shadows, haze).
         for (int i = 0; i < mask.Length; i++)
-            mask[i] = Sigmoid((mask[i] - 0.48f) * 14f);
+            mask[i] = Sigmoid((state.RefinedMask[i] - threshold) * 14f);
 
         // ── 8. Fringe cleanup ─────────────────────────────────────────────
-        //   Threshold raised to 0.18 to catch the 10–18% alpha fringe zone
-        //   responsible for the dark outline halo on fur/hair edges.
         for (int i = 0; i < mask.Length; i++)
         {
-            if (mask[i] < 0.18f)       mask[i] = 0f;    // snap to transparent
-            else if (mask[i] > 0.92f)  mask[i] = 1f;    // snap to fully opaque
+            if (mask[i] < 0.18f)       mask[i] = 0f;
+            else if (mask[i] > 0.92f)  mask[i] = 1f;
         }
 
         // ── 9. Apply alpha & enhance ──────────────────────────────────────
-        Bitmap output = ApplyAlpha(source, mask, W, H);
+        Bitmap output = ApplyAlpha(state.Source, mask, W, H);
         output = ApplyUnsharpMask(output, W, H, blurRadius: 1, amount: 0.55f);
 
         return output;
@@ -514,4 +527,20 @@ public sealed class BackgroundRemovalService : IDisposable
     }
 
     public void Dispose() => _session.Dispose();
+}
+
+public sealed class PreparedRemovalState
+{
+    public Bitmap Source { get; }
+    public float[] RefinedMask { get; }
+    public int Width { get; }
+    public int Height { get; }
+
+    public PreparedRemovalState(Bitmap source, float[] refinedMask, int width, int height)
+    {
+        Source = source;
+        RefinedMask = refinedMask;
+        Width = width;
+        Height = height;
+    }
 }
