@@ -4,6 +4,7 @@ using System.Drawing.Imaging;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Interop;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
@@ -32,6 +33,7 @@ public partial class RefinementWindow : Window
     private double _startScrollY;
     private System.Windows.Point _startMousePos;
     private System.Windows.Media.Brush? _checkerboardBrush;
+    private System.Windows.Media.Brush? _darkCheckerboardBrush;
 
     [System.Runtime.InteropServices.DllImport("gdi32.dll")]
     [return: System.Runtime.InteropServices.MarshalAs(System.Runtime.InteropServices.UnmanagedType.Bool)]
@@ -49,6 +51,22 @@ public partial class RefinementWindow : Window
     private async void Window_Loaded(object sender, RoutedEventArgs e)
     {
         _checkerboardBrush = ImageScrollViewer.Background;
+
+        // Initialize dark checkerboard pattern
+        var group = new DrawingGroup();
+        group.Children.Add(new GeometryDrawing(new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(24, 24, 24)), null, new RectangleGeometry(new Rect(0,0,16,16))));
+        var darkTile = new GeometryGroup();
+        darkTile.Children.Add(new RectangleGeometry(new Rect(0,0,8,8)));
+        darkTile.Children.Add(new RectangleGeometry(new Rect(8,8,8,8)));
+        group.Children.Add(new GeometryDrawing(new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(48, 48, 48)), null, darkTile));
+
+        _darkCheckerboardBrush = new DrawingBrush(group)
+        {
+            TileMode = TileMode.Tile,
+            Viewport = new Rect(0, 0, 16, 16),
+            ViewportUnits = BrushMappingMode.Absolute
+        };
+
         // 1. Instantly display the original capture while AI is processing
         PreviewImage.Source = ConvertBitmap(_rawCapture);
 
@@ -142,6 +160,11 @@ public partial class RefinementWindow : Window
         BrushSizeContainer.Visibility = anyChecked ? Visibility.Visible : Visibility.Collapsed;
         BackgroundOriginalImage.Visibility = restoreChecked ? Visibility.Visible : Visibility.Collapsed;
 
+        if (!anyChecked && BrushCursorEllipse != null)
+        {
+            BrushCursorEllipse.Visibility = Visibility.Collapsed;
+        }
+
         if (restoreChecked && BackgroundOriginalImage.Source == null)
         {
             BackgroundOriginalImage.Source = ConvertBitmap(_rawCapture);
@@ -156,6 +179,67 @@ public partial class RefinementWindow : Window
         {
             BrushSizeText.Text = $"{(int)BrushSizeSlider.Value} px";
         }
+        if (PreviewImage != null)
+        {
+            UpdateBrushCursor(System.Windows.Input.Mouse.GetPosition(PreviewImage));
+        }
+    }
+
+    private void DecreaseBrushSize_Click(object sender, RoutedEventArgs e)
+    {
+        BrushSizeSlider.Value = Math.Max(BrushSizeSlider.Minimum, BrushSizeSlider.Value - 1);
+    }
+
+    private void IncreaseBrushSize_Click(object sender, RoutedEventArgs e)
+    {
+        BrushSizeSlider.Value = Math.Min(BrushSizeSlider.Maximum, BrushSizeSlider.Value + 1);
+    }
+
+    private void PreviewImage_MouseEnter(object sender, System.Windows.Input.MouseEventArgs e)
+    {
+        UpdateBrushCursor(e.GetPosition(PreviewImage));
+    }
+
+    private void PreviewImage_MouseLeave(object sender, System.Windows.Input.MouseEventArgs e)
+    {
+        if (BrushCursorEllipse != null)
+        {
+            BrushCursorEllipse.Visibility = Visibility.Collapsed;
+        }
+    }
+
+    private void UpdateBrushCursor(System.Windows.Point mousePos)
+    {
+        if (BrushCursorEllipse == null || _rawCapture == null || (RestoreBrushCheckBox.IsChecked != true && RemoveBrushCheckBox.IsChecked != true) || _isSpacePressed || _isPreparing)
+        {
+            if (BrushCursorEllipse != null)
+            {
+                BrushCursorEllipse.Visibility = Visibility.Collapsed;
+            }
+            return;
+        }
+
+        double controlW = PreviewImage.ActualWidth;
+        double controlH = PreviewImage.ActualHeight;
+        if (controlW == 0 || controlH == 0) return;
+
+        double imageW = _rawCapture.Width;
+        double imageH = _rawCapture.Height;
+
+        double ratioX = controlW / imageW;
+        double ratioY = controlH / imageH;
+        double scale = Math.Min(ratioX, ratioY);
+
+        double displayRadius = BrushSizeSlider.Value * scale;
+        double diameter = displayRadius * 2;
+
+        BrushCursorEllipse.Width = diameter;
+        BrushCursorEllipse.Height = diameter;
+
+        Canvas.SetLeft(BrushCursorEllipse, mousePos.X + 10 - displayRadius);
+        Canvas.SetTop(BrushCursorEllipse, mousePos.Y + 10 - displayRadius);
+
+        BrushCursorEllipse.Visibility = Visibility.Visible;
     }
 
     private void PreviewImage_MouseDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
@@ -177,10 +261,13 @@ public partial class RefinementWindow : Window
 
     private void PreviewImage_MouseMove(object sender, System.Windows.Input.MouseEventArgs e)
     {
+        System.Windows.Point pos = e.GetPosition(PreviewImage);
+        UpdateBrushCursor(pos);
+
         if (!PreviewImage.IsMouseCaptured)
             return;
 
-        PaintRestoreStroke(e.GetPosition(PreviewImage));
+        PaintRestoreStroke(pos);
     }
 
     private void PreviewImage_MouseUp(object sender, System.Windows.Input.MouseButtonEventArgs e)
@@ -607,6 +694,14 @@ public partial class RefinementWindow : Window
         if (_checkerboardBrush != null)
         {
             ImageScrollViewer.Background = _checkerboardBrush;
+        }
+    }
+
+    private void BgDarkGridButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (_darkCheckerboardBrush != null)
+        {
+            ImageScrollViewer.Background = _darkCheckerboardBrush;
         }
     }
 

@@ -145,9 +145,19 @@
                                         </TransformGroup>
                                     </Grid.LayoutTransform>
 
-                                    <Image x:Name="BackgroundOriginalImage" Stretch="Uniform" Margin="10" Opacity="0.6" Visibility="Collapsed"/>
+                                    <Image x:Name="BackgroundOriginalImage" Stretch="Uniform" Margin="10" Opacity="0.7" Visibility="Collapsed"/>
                                     <Image x:Name="PreviewImage" Stretch="Uniform" Margin="10" RenderOptions.BitmapScalingMode="HighQuality"
-                                           MouseDown="PreviewImage_MouseDown" MouseMove="PreviewImage_MouseMove" MouseUp="PreviewImage_MouseUp"/>
+                                           MouseDown="PreviewImage_MouseDown" MouseMove="PreviewImage_MouseMove" MouseUp="PreviewImage_MouseUp"
+                                           MouseEnter="PreviewImage_MouseEnter" MouseLeave="PreviewImage_MouseLeave"/>
+
+                                    <!-- Circular Brush Cursor Overlay -->
+                                    <Canvas x:Name="BrushCursorCanvas" IsHitTestVisible="False" Panel.ZIndex="99">
+                                        <Ellipse x:Name="BrushCursorEllipse"
+                                                 Stroke="#0078D7" StrokeThickness="1.5"
+                                                 Fill="#300078D7"
+                                                 Visibility="Collapsed"
+                                                 IsHitTestVisible="False"/>
+                                    </Canvas>
                                 </Grid>
                             </ScrollViewer>
                         </Border>
@@ -159,9 +169,10 @@
             <Border BorderBrush="#FFFFFF" BorderThickness="1,1,0,0" Background="#D4D0C8" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="6" SnapsToDevicePixels="True" Panel.ZIndex="10">
                 <Border BorderBrush="#808080" BorderThickness="0,0,1,1" Padding="3">
                     <StackPanel Orientation="Horizontal">
-                        <Button x:Name="BgGridButton" Content="🏁" Width="22" Height="22" Click="BgGridButton_Click" Margin="0,0,3,0"/>
-                        <Button x:Name="BgWhiteButton" Content="⬜" Width="22" Height="22" Click="BgWhiteButton_Click" Margin="0,0,3,0"/>
-                        <Button x:Name="BgBlackButton" Content="⬛" Width="22" Height="22" Click="BgBlackButton_Click"/>
+                        <Button x:Name="BgGridButton" Content="🏁" Width="22" Height="22" Click="BgGridButton_Click" Margin="0,0,3,0" ToolTip="Light Grid"/>
+                        <Button x:Name="BgDarkGridButton" Content="🏴" Width="22" Height="22" Click="BgDarkGridButton_Click" Margin="0,0,3,0" ToolTip="Dark Grid"/>
+                        <Button x:Name="BgWhiteButton" Content="⬜" Width="22" Height="22" Click="BgWhiteButton_Click" Margin="0,0,3,0" ToolTip="White"/>
+                        <Button x:Name="BgBlackButton" Content="⬛" Width="22" Height="22" Click="BgBlackButton_Click" ToolTip="Black"/>
                     </StackPanel>
                 </Border>
             </Border>
@@ -183,7 +194,7 @@
                         </Grid.ColumnDefinitions>
                         <TextBlock Grid.Column="0" Text="Keep Object" FontFamily="MS Sans Serif, Tahoma" FontSize="11" VerticalAlignment="Center" Margin="0,0,8,0"/>
                         <Slider Grid.Column="1" x:Name="ThresholdSlider" Minimum="0.10" Maximum="0.90" Value="0.48" 
-                                TickFrequency="0.05" IsSnapToTickEnabled="False"
+                                TickFrequency="0.05" IsSnapToTickEnabled="False" IsMoveToPointEnabled="True"
                                 ValueChanged="ThresholdSlider_ValueChanged" VerticalAlignment="Center"/>
                         <TextBlock Grid.Column="2" Text="Clean Background" FontFamily="MS Sans Serif, Tahoma" FontSize="11" VerticalAlignment="Center" Margin="8,0,0,0"/>
                     </Grid>
@@ -200,8 +211,19 @@
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
                         <TextBlock Grid.Column="0" Text="Brush Size" FontFamily="MS Sans Serif, Tahoma" FontSize="11" VerticalAlignment="Center" Margin="0,0,8,0"/>
-                        <Slider Grid.Column="1" x:Name="BrushSizeSlider" Minimum="1" Maximum="60" Value="10" 
-                                TickFrequency="1" IsSnapToTickEnabled="True" ValueChanged="BrushSizeSlider_ValueChanged" VerticalAlignment="Center"/>
+                        
+                        <Grid Grid.Column="1">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <Button Grid.Column="0" Content="-" Width="20" Height="20" Click="DecreaseBrushSize_Click" FontFamily="Consolas, Tahoma" FontWeight="Bold" Margin="0,0,4,0"/>
+                            <Slider Grid.Column="1" x:Name="BrushSizeSlider" Minimum="1" Maximum="60" Value="10" 
+                                    TickFrequency="1" IsSnapToTickEnabled="True" IsMoveToPointEnabled="True" ValueChanged="BrushSizeSlider_ValueChanged" VerticalAlignment="Center"/>
+                            <Button Grid.Column="2" Content="+" Width="20" Height="20" Click="IncreaseBrushSize_Click" FontFamily="Consolas, Tahoma" FontWeight="Bold" Margin="4,0,0,0"/>
+                        </Grid>
+
                         <TextBlock Grid.Column="2" x:Name="BrushSizeText" Text="10 px" FontFamily="MS Sans Serif, Tahoma" FontSize="11" VerticalAlignment="Center" Margin="8,0,0,0" Width="40"/>
                     </Grid>
                 </StackPanel>
