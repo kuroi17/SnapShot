@@ -145,7 +145,7 @@
                                         </TransformGroup>
                                     </Grid.LayoutTransform>
 
-                                    <Image x:Name="BackgroundOriginalImage" Stretch="Uniform" Margin="10" Opacity="0.3" Visibility="Collapsed"/>
+                                    <Image x:Name="BackgroundOriginalImage" Stretch="Uniform" Margin="10" Opacity="0.6" Visibility="Collapsed"/>
                                     <Image x:Name="PreviewImage" Stretch="Uniform" Margin="10" RenderOptions.BitmapScalingMode="HighQuality"
                                            MouseDown="PreviewImage_MouseDown" MouseMove="PreviewImage_MouseMove" MouseUp="PreviewImage_MouseUp"/>
                                 </Grid>
