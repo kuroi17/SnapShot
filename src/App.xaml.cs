@@ -48,17 +48,40 @@ public partial class App : Application
             $"ONNX model '{filename}' not found. Expected at: {path1}");
     }
 
+    private static System.Drawing.Icon LoadAppIcon()
+    {
+        try
+        {
+            string pngPath = Path.Combine(AppContext.BaseDirectory, "Assets", "snapshot_icon.png");
+            if (File.Exists(pngPath))
+            {
+                using var bmp = new System.Drawing.Bitmap(pngPath);
+                IntPtr hIcon = bmp.GetHicon();
+                using var icon = System.Drawing.Icon.FromHandle(hIcon);
+                return (System.Drawing.Icon)icon.Clone();
+            }
+
+            string icoPath = Path.Combine(AppContext.BaseDirectory, "Assets", "icon.ico");
+            if (File.Exists(icoPath))
+            {
+                return new System.Drawing.Icon(icoPath);
+            }
+        }
+        catch
+        {
+            // Fallback safely to system default app icon
+        }
+
+        return System.Drawing.SystemIcons.Application;
+    }
+
     private void SetupTrayIcon()
     {
-        string iconPath = Path.Combine(AppContext.BaseDirectory, "Assets", "icon.ico");
-
         _trayIcon = new WinForms.NotifyIcon
         {
             Text    = "SnapShot — Ctrl+Shift+S to capture",
             Visible = true,
-            Icon    = File.Exists(iconPath)
-                        ? new System.Drawing.Icon(iconPath)
-                        : System.Drawing.SystemIcons.Application,
+            Icon    = LoadAppIcon(),
         };
 
         var menu = new WinForms.ContextMenuStrip();
