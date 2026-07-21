@@ -50,6 +50,11 @@ public partial class RefinementWindow : Window
 
     private async void Window_Loaded(object sender, RoutedEventArgs e)
     {
+        _zoomLevel = 1.0;
+        ImageScaleTransform.ScaleX = 1.0;
+        ImageScaleTransform.ScaleY = 1.0;
+        ImageScrollViewer.ScrollToHome();
+
         _checkerboardBrush = ImageScrollViewer.Background;
 
         // Initialize dark checkerboard pattern
@@ -210,7 +215,9 @@ public partial class RefinementWindow : Window
 
     private void UpdateBrushCursor(System.Windows.Point mousePos)
     {
-        if (BrushCursorEllipse == null || _rawCapture == null || (RestoreBrushCheckBox.IsChecked != true && RemoveBrushCheckBox.IsChecked != true) || _isSpacePressed || _isPreparing)
+        bool isCtrlPressed = (System.Windows.Input.Keyboard.Modifiers & System.Windows.Input.ModifierKeys.Control) == System.Windows.Input.ModifierKeys.Control;
+
+        if (BrushCursorEllipse == null || _rawCapture == null || (RestoreBrushCheckBox.IsChecked != true && RemoveBrushCheckBox.IsChecked != true) || _isSpacePressed || _isPanning || isCtrlPressed || _isPreparing)
         {
             if (BrushCursorEllipse != null)
             {
@@ -236,21 +243,37 @@ public partial class RefinementWindow : Window
         BrushCursorEllipse.Width = diameter;
         BrushCursorEllipse.Height = diameter;
 
-        Canvas.SetLeft(BrushCursorEllipse, mousePos.X + 10 - displayRadius);
-        Canvas.SetTop(BrushCursorEllipse, mousePos.Y + 10 - displayRadius);
+        // Position circle relative to BrushCursorCanvas for 100% accurate cursor centering
+        System.Windows.Point mousePosInCanvas = System.Windows.Input.Mouse.GetPosition(BrushCursorCanvas);
+
+        Canvas.SetLeft(BrushCursorEllipse, mousePosInCanvas.X - displayRadius);
+        Canvas.SetTop(BrushCursorEllipse, mousePosInCanvas.Y - displayRadius);
 
         BrushCursorEllipse.Visibility = Visibility.Visible;
     }
 
     private void PreviewImage_MouseDown(object sender, System.Windows.Input.MouseButtonEventArgs e)
     {
-        if (_isPreparing || e.LeftButton != System.Windows.Input.MouseButtonState.Pressed || _isSpacePressed)
+        if (_isPreparing || e.LeftButton != System.Windows.Input.MouseButtonState.Pressed)
             return;
 
         bool isRestore = RestoreBrushCheckBox.IsChecked == true;
         bool isRemove = RemoveBrushCheckBox.IsChecked == true;
-        if (!isRestore && !isRemove)
+        bool isBrushActive = isRestore || isRemove;
+        bool isCtrlPressed = (System.Windows.Input.Keyboard.Modifiers & System.Windows.Input.ModifierKeys.Control) == System.Windows.Input.ModifierKeys.Control;
+
+        if (!isBrushActive || isCtrlPressed || _isSpacePressed || e.ChangedButton == System.Windows.Input.MouseButton.Middle)
+        {
+            _isPanning = true;
+            _startScrollX = ImageScrollViewer.HorizontalOffset;
+            _startScrollY = ImageScrollViewer.VerticalOffset;
+            _startMousePos = e.GetPosition(ImageScrollViewer);
+            System.Windows.Input.Mouse.OverrideCursor = System.Windows.Input.Cursors.Hand;
+            if (BrushCursorEllipse != null) BrushCursorEllipse.Visibility = Visibility.Collapsed;
+            PreviewImage.CaptureMouse();
+            e.Handled = true;
             return;
+        }
 
         // Save state to Undo stack before drawing begins
         PushUndo();
@@ -264,6 +287,30 @@ public partial class RefinementWindow : Window
         System.Windows.Point pos = e.GetPosition(PreviewImage);
         UpdateBrushCursor(pos);
 
+        bool isBrushActive = RestoreBrushCheckBox.IsChecked == true || RemoveBrushCheckBox.IsChecked == true;
+        bool isCtrlPressed = (System.Windows.Input.Keyboard.Modifiers & System.Windows.Input.ModifierKeys.Control) == System.Windows.Input.ModifierKeys.Control;
+
+        if (_isPanning && (PreviewImage.IsMouseCaptured || ImageScrollViewer.IsMouseCaptured))
+        {
+            var currentPos = e.GetPosition(ImageScrollViewer);
+            double dx = currentPos.X - _startMousePos.X;
+            double dy = currentPos.Y - _startMousePos.Y;
+            ImageScrollViewer.ScrollToHorizontalOffset(_startScrollX - dx);
+            ImageScrollViewer.ScrollToVerticalOffset(_startScrollY - dy);
+            System.Windows.Input.Mouse.OverrideCursor = System.Windows.Input.Cursors.Hand;
+            e.Handled = true;
+            return;
+        }
+
+        if (!isBrushActive || isCtrlPressed || _isSpacePressed)
+        {
+            System.Windows.Input.Mouse.OverrideCursor = System.Windows.Input.Cursors.Hand;
+        }
+        else if (isBrushActive && !_isPanning && !_isSpacePressed && !isCtrlPressed)
+        {
+            System.Windows.Input.Mouse.OverrideCursor = null;
+        }
+
         if (!PreviewImage.IsMouseCaptured)
             return;
 
@@ -272,7 +319,24 @@ public partial class RefinementWindow : Window
 
     private void PreviewImage_MouseUp(object sender, System.Windows.Input.MouseButtonEventArgs e)
     {
-        if (PreviewImage.IsMouseCaptured)
+        if (_isPanning)
+        {
+            _isPanning = false;
+            if (PreviewImage.IsMouseCaptured) PreviewImage.ReleaseMouseCapture();
+            if (ImageScrollViewer.IsMouseCaptured) ImageScrollViewer.ReleaseMouseCapture();
+
+            bool isBrushActive = RestoreBrushCheckBox.IsChecked == true || RemoveBrushCheckBox.IsChecked == true;
+            if (isBrushActive && !_isSpacePressed)
+            {
+                System.Windows.Input.Mouse.OverrideCursor = null;
+            }
+            else
+            {
+                System.Windows.Input.Mouse.OverrideCursor = System.Windows.Input.Cursors.Hand;
+            }
+            e.Handled = true;
+        }
+        else if (PreviewImage.IsMouseCaptured)
         {
             PreviewImage.ReleaseMouseCapture();
         }
@@ -545,7 +609,7 @@ public partial class RefinementWindow : Window
     private void UndoButton_Click(object sender, RoutedEventArgs e) => PerformUndo();
     private void RedoButton_Click(object sender, RoutedEventArgs e) => PerformRedo();
 
-    private void Window_KeyDown(object sender, System.Windows.Input.KeyEventArgs e)
+    private void Window_PreviewKeyDown(object sender, System.Windows.Input.KeyEventArgs e)
     {
         if (e.Key == System.Windows.Input.Key.Escape)
         {
@@ -559,6 +623,11 @@ public partial class RefinementWindow : Window
         else if (e.Key == System.Windows.Input.Key.Y && (System.Windows.Input.Keyboard.Modifiers & System.Windows.Input.ModifierKeys.Control) == System.Windows.Input.ModifierKeys.Control)
         {
             PerformRedo();
+            e.Handled = true;
+        }
+        else if (e.Key == System.Windows.Input.Key.C && (System.Windows.Input.Keyboard.Modifiers & System.Windows.Input.ModifierKeys.Control) == System.Windows.Input.ModifierKeys.Control)
+        {
+            OkayButton_Click(sender, e);
             e.Handled = true;
         }
         else if (e.Key == System.Windows.Input.Key.OemPlus || e.Key == System.Windows.Input.Key.Add)
@@ -644,8 +713,15 @@ public partial class RefinementWindow : Window
         }
         else if ((System.Windows.Input.Keyboard.Modifiers & System.Windows.Input.ModifierKeys.Shift) == System.Windows.Input.ModifierKeys.Shift)
         {
-            if (e.Delta > 0) ImageScrollViewer.LineLeft();
-            else ImageScrollViewer.LineRight();
+            double step = (e.Delta / 120.0) * 20.0;
+            ImageScrollViewer.ScrollToHorizontalOffset(ImageScrollViewer.HorizontalOffset - step);
+            e.Handled = true;
+        }
+        else
+        {
+            // Controlled, smooth vertical scrolling for touchpad & mouse wheel
+            double step = (e.Delta / 120.0) * 24.0;
+            ImageScrollViewer.ScrollToVerticalOffset(ImageScrollViewer.VerticalOffset - step);
             e.Handled = true;
         }
     }
@@ -654,14 +730,16 @@ public partial class RefinementWindow : Window
     {
         bool isMiddleClick = e.ChangedButton == System.Windows.Input.MouseButton.Middle;
         bool isSpaceLeftClick = e.ChangedButton == System.Windows.Input.MouseButton.Left && _isSpacePressed;
+        bool isNoBrushLeftClick = e.ChangedButton == System.Windows.Input.MouseButton.Left && RestoreBrushCheckBox.IsChecked != true && RemoveBrushCheckBox.IsChecked != true;
 
-        if (isMiddleClick || isSpaceLeftClick)
+        if (isMiddleClick || isSpaceLeftClick || isNoBrushLeftClick)
         {
             _isPanning = true;
             _startScrollX = ImageScrollViewer.HorizontalOffset;
             _startScrollY = ImageScrollViewer.VerticalOffset;
             _startMousePos = e.GetPosition(ImageScrollViewer);
             ImageScrollViewer.CaptureMouse();
+            this.Cursor = System.Windows.Input.Cursors.Hand;
             e.Handled = true;
         }
     }
@@ -684,7 +762,14 @@ public partial class RefinementWindow : Window
         if (_isPanning)
         {
             _isPanning = false;
-            ImageScrollViewer.ReleaseMouseCapture();
+            if (ImageScrollViewer.IsMouseCaptured)
+            {
+                ImageScrollViewer.ReleaseMouseCapture();
+            }
+            if (!_isSpacePressed && (RestoreBrushCheckBox.IsChecked == true || RemoveBrushCheckBox.IsChecked == true))
+            {
+                this.Cursor = System.Windows.Input.Cursors.Arrow;
+            }
             e.Handled = true;
         }
     }
@@ -728,18 +813,9 @@ public partial class RefinementWindow : Window
         if (msg == WM_MOUSEHWHEEL)
         {
             short delta = (short)((((long)wParam) >> 16) & 0xFFFF);
-            if (delta > 0)
-            {
-                ImageScrollViewer.LineRight();
-                ImageScrollViewer.LineRight();
-                ImageScrollViewer.LineRight();
-            }
-            else if (delta < 0)
-            {
-                ImageScrollViewer.LineLeft();
-                ImageScrollViewer.LineLeft();
-                ImageScrollViewer.LineLeft();
-            }
+            // Smooth, controlled touchpad horizontal scrolling
+            double step = (delta / 120.0) * 16.0;
+            ImageScrollViewer.ScrollToHorizontalOffset(ImageScrollViewer.HorizontalOffset + step);
             handled = true;
         }
         return IntPtr.Zero;

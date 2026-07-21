@@ -102,13 +102,13 @@ public sealed class BackgroundRemovalService : IDisposable
 
         // ── 7. Sigmoid sharpening ─────────────────────────────────────────
         for (int i = 0; i < mask.Length; i++)
-            mask[i] = Sigmoid((state.RefinedMask[i] - threshold) * 14f);
+            mask[i] = Sigmoid((state.RefinedMask[i] - threshold) * 12f);
 
         // ── 8. Fringe cleanup ─────────────────────────────────────────────
         for (int i = 0; i < mask.Length; i++)
         {
-            if (mask[i] < 0.18f)       mask[i] = 0f;
-            else if (mask[i] > 0.92f)  mask[i] = 1f;
+            if (mask[i] < 0.05f)       mask[i] = 0f;
+            else if (mask[i] > 0.95f)  mask[i] = 1f;
         }
 
         // ── 9. Apply alpha & enhance ──────────────────────────────────────
@@ -487,7 +487,7 @@ public sealed class BackgroundRemovalService : IDisposable
 
                     if (weightSum > 0f)
                     {
-                        float blend = 1.0f - m; // 0 = keep original, 1 = replace completely with solid fg color
+                        float blend = (1.0f - m) * 0.25f; // Soft blend to preserve true outer fur/edge colors
                         float fgB = sumB / weightSum;
                         float fgG = sumG / weightSum;
                         float fgR = sumR / weightSum;

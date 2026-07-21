@@ -10,7 +10,7 @@
         WindowStartupLocation="CenterScreen"
         Background="#D4D0C8"
         WindowStyle="ThreeDBorderWindow"
-        KeyDown="Window_KeyDown"
+        PreviewKeyDown="Window_PreviewKeyDown"
         KeyUp="Window_KeyUp"
         Loaded="Window_Loaded">
 
@@ -185,7 +185,7 @@
                 <StackPanel>
                     <TextBlock Text="Refinement Settings" FontWeight="Bold" FontFamily="MS Sans Serif, Tahoma" FontSize="11" Margin="0,0,0,10"/>
                     
-                    <CheckBox x:Name="RemoveBgCheckBox" Content="Remove Background" IsChecked="True" Checked="RemoveBgCheckBox_Changed" Unchecked="RemoveBgCheckBox_Changed" Margin="0,0,0,10"/>
+                    <CheckBox x:Name="RemoveBgCheckBox" Content="Remove Background" IsChecked="True" Focusable="False" Checked="RemoveBgCheckBox_Changed" Unchecked="RemoveBgCheckBox_Changed" Margin="0,0,0,10"/>
 
                     <Grid x:Name="SliderContainer" Margin="0,0,0,10">
                         <Grid.ColumnDefinitions>
@@ -195,14 +195,14 @@
                         </Grid.ColumnDefinitions>
                         <TextBlock Grid.Column="0" Text="Keep Object" FontFamily="MS Sans Serif, Tahoma" FontSize="11" VerticalAlignment="Center" Margin="0,0,8,0"/>
                         <Slider Grid.Column="1" x:Name="ThresholdSlider" Minimum="0.10" Maximum="0.90" Value="0.48" 
-                                TickFrequency="0.05" IsSnapToTickEnabled="False" IsMoveToPointEnabled="True"
+                                TickFrequency="0.05" IsSnapToTickEnabled="False" IsMoveToPointEnabled="True" Focusable="False"
                                 ValueChanged="ThresholdSlider_ValueChanged" VerticalAlignment="Center"/>
                         <TextBlock Grid.Column="2" Text="Clean Background" FontFamily="MS Sans Serif, Tahoma" FontSize="11" VerticalAlignment="Center" Margin="8,0,0,0"/>
                     </Grid>
 
                     <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
-                        <CheckBox x:Name="RestoreBrushCheckBox" Content="Restore Brush" IsChecked="False" Checked="RestoreBrushCheckBox_Changed" Unchecked="RestoreBrushCheckBox_Changed" Margin="0,0,20,0"/>
-                        <CheckBox x:Name="RemoveBrushCheckBox" Content="Remove Brush" IsChecked="False" Checked="RemoveBrushCheckBox_Changed" Unchecked="RemoveBrushCheckBox_Changed"/>
+                        <CheckBox x:Name="RestoreBrushCheckBox" Content="Restore Brush" IsChecked="False" Focusable="False" Checked="RestoreBrushCheckBox_Changed" Unchecked="RestoreBrushCheckBox_Changed" Margin="0,0,20,0"/>
+                        <CheckBox x:Name="RemoveBrushCheckBox" Content="Remove Brush" IsChecked="False" Focusable="False" Checked="RemoveBrushCheckBox_Changed" Unchecked="RemoveBrushCheckBox_Changed"/>
                     </StackPanel>
 
                     <Grid x:Name="BrushSizeContainer" Margin="0,0,0,5" Visibility="Collapsed">
