@@ -98,6 +98,9 @@ public partial class App : Application
 
         _trayIcon.ContextMenuStrip = menu;
         _trayIcon.DoubleClick += (_, _) => BeginCapture();
+
+        // Show startup notification in System Tray
+        ShowTrayNotification("SnapShot is Running 📸", "SnapShot is active in your system tray. Press Ctrl+Shift+S anytime to capture!", WinForms.ToolTipIcon.Info);
     }
 
     private void SetupHotkey()
