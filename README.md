@@ -44,8 +44,8 @@ Your captured images stay on your computer.
 
 Get the latest pre-compiled executable from GitHub Releases:
 
-[![Download SnapShot.exe](https://img.shields.io/badge/Download-SnapShot.exe-0078D7?style=for-the-badge\&logo=windows\&logoColor=white)](https://github.com/kuroi17/SnapShot/releases/download/v1.0.0/SnapShot.exe)
-[![GitHub Releases](https://img.shields.io/github/v/release/kuroi17/SnapShot?style=for-the-badge\&color=28a745)](https://github.com/kuroi17/SnapShot/releases)
+[![Download SnapShot.exe](https://img.shields.io/badge/Download-SnapShot.exe-0078D7?style=for-the-badge&logo=windows&logoColor=white)](https://github.com/kuroi17/SnapShot/releases/download/v1.0.0/SnapShot.exe)
+[![GitHub Releases](https://img.shields.io/github/v/release/kuroi17/SnapShot?style=for-the-badge&color=28a745)](https://github.com/kuroi17/SnapShot/releases)
 
 > **No installation required.** Run `SnapShot.exe`, and it will quietly run in the background from your Windows system tray.
 
@@ -55,7 +55,7 @@ Get the latest pre-compiled executable from GitHub Releases:
 2. Press `Ctrl+Shift+S` from any application.
 3. Drag a selection box over the object you want to extract.
 4. Fine-tune the cutout using the threshold slider, zoom/pan controls, or paint brushes.
-5. Press `Enter` or click **Okay**.
+5. Press `Enter`, `Ctrl+C`, or click **Okay**.
 6. Paste (`Ctrl+V`) the transparent PNG into Figma, Discord, Slack, Word, Paint, or any other application that supports images.
 
 ---
@@ -97,7 +97,7 @@ Fine-tune the result using:
 
 ### 4. Copy and Paste
 
-Press `Enter` or click **Okay** to copy the transparent PNG directly to your clipboard.
+Press `Enter`, `Ctrl+C`, or click **Okay** to copy the transparent PNG directly to your clipboard.
 
 Then paste it anywhere:
 
@@ -114,6 +114,7 @@ Then paste it anywhere:
 * No cloud processing or external API calls
 * Approximately **4.7 MB model size**
 * Background removal can complete in under **100 ms**, depending on your hardware
+* **Enhanced Edge Accuracy**: Fine-detail retention (0.05 cutoff) for animal fur, thin ear tips, and whiskers without edge erosion or background color bleed
 
 ### 🎨 Real-Time Cutout Refinement
 
@@ -134,26 +135,27 @@ The low-opacity guide is hidden while removing areas for a cleaner editing exper
 * Brush size from **1px to 60px**
 * 1px increments
 * Dedicated `-` and `+` controls
-* Dynamic circle cursor
-* Cursor scales with brush size and zoom level
+* **100% Precise Circle Cursor**: Dynamic translucent blue ring tracks brush radius and centers perfectly over mouse pointer tip at all zoom levels
 
 ### 🔍 Figma-Style Navigation
 
 Navigate large cutouts smoothly with:
 
-* `Ctrl` + Mouse Wheel — Zoom
-* `Ctrl` + `+` / `-` — Zoom
+* `Ctrl` + Mouse Wheel — Zoom in / out
+* `Ctrl` + `+` / `-` — Zoom in / out
+* `Ctrl` + Left-click drag — Pan canvas (even in active brush mode)
 * `Shift` + Mouse Wheel — Horizontal pan
-* Two-finger touchpad swipe — Pan
-* Middle-click drag — Pan
-* `Spacebar` + Left-click drag — Pan
+* Two-finger touchpad swipe — Smooth horizontal & vertical pan
+* Middle-click drag — Pan canvas
+* `Spacebar` + Left-click drag — Pan canvas
 
-### ↩️ Undo & Redo
+### ↩️ Shortcuts & Editing History
 
-Full editing history with:
-
-* `Ctrl + Z` — Undo
-* `Ctrl + Y` — Redo
+* `Ctrl + C` — Instant copy cutout & close window
+* `Ctrl + Z` — Undo brush stroke
+* `Ctrl + Y` — Redo brush stroke
+* `Escape` — Cancel capture
+* `PreviewKeyDown Routing` — Shortcuts work reliably without accidental checkbox focus toggling
 
 Retro-style UI buttons are also available directly in the refinement window.
 
@@ -174,28 +176,10 @@ Brush strokes directly manipulate the pixel buffer instead of re-running AI infe
 
 This keeps painting responsive and avoids unnecessary model re-evaluation during editing.
 
-### 📋 Clipboard-Ready Output
+### 🔔 System Tray Indicator & Executable Icon
 
-SnapShot writes the final transparent PNG directly to the Windows clipboard.
-
-Capture an object once and paste it immediately into:
-
-**Figma · Slack · Discord · Word · Paint · Other image-compatible applications**
-
-### 🪟 Retro Windows UI
-
-The confirmation and refinement experience is inspired by the classic Windows 95/98 interface.
-
-A little nostalgic. A little weird. Very functional.
-
----
-
-## 🖥️ System Requirements
-
-* **Operating System:** Windows 10 / 11 (64-bit)
-* **Runtime:** .NET 10.0
-* **Architecture:** x64
-* **AI Model:** Bundled `u2netp` ONNX model
+* **System Tray Indicator**: Startup balloon notification confirms SnapShot is active in background tray.
+* **Native Embedded Icon**: Standalone `SnapShot.exe` embeds a 256x256 retro pixel-art camera icon displayed natively in Windows File Explorer.
 
 ---
 
@@ -203,67 +187,47 @@ A little nostalgic. A little weird. Very functional.
 
 ### Prerequisites
 
-Install the **.NET 10 SDK**.
+* [.NET 10.0 SDK](https://dotnet.microsoft.com/download/dotnet/10.0)
 
-### Clone the Repository
+### 1. Clone the Repository
 
 ```powershell
 git clone https://github.com/kuroi17/SnapShot.git
 cd SnapShot
 ```
 
-### Build
+### 2. Build the Project
 
 ```powershell
 dotnet build src/SnapShot.csproj -c Release
 ```
 
-### Publish as a Single Executable
+### 3. Publish as a Standalone Executable
 
-To package the app into a standalone executable:
+To publish as a single standalone executable:
 
 ```powershell
-dotnet publish src/SnapShot.csproj `
-  -c Release `
-  -r win-x64 `
-  --self-contained false `
-  -p:PublishSingleFile=true
+dotnet publish src/SnapShot.csproj -c Release -r win-x64 --self-contained false -p:PublishSingleFile=true
 ```
 
-The output executable will be generated at:
+The output executable will be created at:
 
-```text
-src/bin/Release/net10.0-windows/win-x64/publish/SnapShot.exe
-```
+`src/bin/Release/net10.0-windows/win-x64/publish/SnapShot.exe`
 
 ---
 
-## 🏗️ Architecture
+## 📁 Repository Structure
 
-SnapShot is structured around a small set of focused services:
-
-| Component                     | Responsibility                                                                     |
-| ----------------------------- | ---------------------------------------------------------------------------------- |
-| `App.xaml.cs`                 | Application entry point, global hotkey registration, and system tray orchestration |
-| `CaptureOverlay.xaml.cs`      | Fullscreen screen selection overlay                                                |
-| `RefinementWindow.xaml.cs`    | Cutout preview, brushes, undo/redo, zoom/pan, and editing controls                 |
-| `HotkeyService.cs`            | Global hotkey handling through Win32 `RegisterHotKey`                              |
-| `ScreenCaptureService.cs`     | High-performance GDI-based screen capture                                          |
-| `BackgroundRemovalService.cs` | Local ONNX inference and image refinement pipeline                                 |
-| `ClipboardService.cs`         | Writes transparent PNG data to the Windows clipboard                               |
-
-The background removal and editing pipeline includes:
-
-* ONNX model inference
-* Color-guided filtering
-* Morphological closing
-* Unsharp masking
-* Direct pixel-buffer manipulation for real-time brush editing
+* `src/App.xaml.cs` — Main application logic, tray icon, and global hotkey handler
+* `src/CaptureOverlay.xaml.cs` — Full-screen selection overlay
+* `src/RefinementWindow.xaml.cs` — Retro refinement modal, brush engine, zoom/pan, and clipboard integration
+* `src/Services/BackgroundRemovalService.cs` — Local ONNX inference, color-guided filtering, edge decontamination, and image post-processing
+* `src/Services/ClipboardService.cs` — Native WPF transparent PNG clipboard helper
+* `src/Services/HotkeyService.cs` — Win32 global hotkey wrapper
+* `src/Services/ScreenCaptureService.cs` — Win32 GDI screen capture helper
 
 ---
 
 ## 📄 License
 
-This project is licensed under the **MIT License**.
-
-See [`LICENSE`](LICENSE) for more information.
+This project is open-source and licensed under the **MIT License**.
