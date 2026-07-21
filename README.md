@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="src/Assets/snapshot_icon.png" alt="SnapShot Icon" width="160">
+  <img src="desktop/src/Assets/snapshot_icon.png" alt="SnapShot Icon" width="160">
 
   <h1>SnapShot</h1>
 
@@ -14,7 +14,7 @@
 <br>
 
 <div align="center">
-  <img src="src/Assets/Visualization.jpg" alt="SnapShot Visualization">
+  <img src="desktop/src/Assets/Visualization.jpg" alt="SnapShot Visualization">
 </div>
 
 ---
@@ -199,7 +199,7 @@ cd SnapShot
 ### 2. Build the Project
 
 ```powershell
-dotnet build src/SnapShot.csproj -c Release
+dotnet build desktop/src/SnapShot.csproj -c Release
 ```
 
 ### 3. Publish as a Standalone Executable
@@ -207,24 +207,29 @@ dotnet build src/SnapShot.csproj -c Release
 To publish as a single standalone executable:
 
 ```powershell
-dotnet publish src/SnapShot.csproj -c Release -r win-x64 --self-contained false -p:PublishSingleFile=true
+dotnet publish desktop/src/SnapShot.csproj -c Release -r win-x64 --self-contained false -p:PublishSingleFile=true
 ```
 
 The output executable will be created at:
 
-`src/bin/Release/net10.0-windows/win-x64/publish/SnapShot.exe`
+`desktop/src/bin/Release/net10.0-windows/win-x64/publish/SnapShot.exe`
 
 ---
 
 ## 📁 Repository Structure
 
-* `src/App.xaml.cs` — Main application logic, tray icon, and global hotkey handler
-* `src/CaptureOverlay.xaml.cs` — Full-screen selection overlay
-* `src/RefinementWindow.xaml.cs` — Retro refinement modal, brush engine, zoom/pan, and clipboard integration
-* `src/Services/BackgroundRemovalService.cs` — Local ONNX inference, color-guided filtering, edge decontamination, and image post-processing
-* `src/Services/ClipboardService.cs` — Native WPF transparent PNG clipboard helper
-* `src/Services/HotkeyService.cs` — Win32 global hotkey wrapper
-* `src/Services/ScreenCaptureService.cs` — Win32 GDI screen capture helper
+```
+SnapShot/
+├── desktop/                         # Windows desktop C# WPF application
+│   └── src/
+│       ├── App.xaml.cs              # Main logic, tray icon, global hotkey
+│       ├── CaptureOverlay.xaml.cs   # Full-screen selection overlay
+│       ├── RefinementWindow.xaml.cs # Cutout refinement modal
+│       └── Services/                # ONNX, clipboard, hotkey, capture
+├── website/                         # Vite + React landing page
+├── docs/                            # Project documentation
+└── .github/workflows/               # CI/CD pipeline
+```
 
 ---
 
