@@ -1,0 +1,19 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer utilities {
+  .win95-bevel-outset {
+    border-width: 2px;
+    border-color: #ffffff;
+    border-right-color: #404040;
+    border-bottom-color: #404040;
+  }
+
+  .win95-bevel-inset {
+    border-width: 2px;
+    border-color: #404040;
+    border-right-color: #ffffff;
+    border-bottom-color: #ffffff;
+  }
+}

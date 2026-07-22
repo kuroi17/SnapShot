@@ -1,0 +1,43 @@
+{
+  "expo": {
+    "name": "SnapShot",
+    "slug": "snapshot",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "scheme": "snapshot",
+    "userInterfaceStyle": "dark",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.kuroi17.snapshot",
+      "infoPlist": {
+        "NSPhotoLibraryUsageDescription": "SnapShot captures screen regions for transparent PNG extraction.",
+        "NSPhotoLibraryAddUsageDescription": "SnapShot needs access to save captured screenshots for processing."
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#0c0d0e",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "package": "com.kuroi17.snapshot",
+      "predictiveBackGestureEnabled": false,
+      "permissions": [
+        "SYSTEM_ALERT_WINDOW",
+        "WRITE_EXTERNAL_STORAGE",
+        "READ_EXTERNAL_STORAGE",
+        "android.permission.MEDIA_PROJECTION"
+      ]
+    },
+    "web": {
+      "favicon": "./assets/favicon.png",
+      "bundler": "metro"
+    },
+    "plugins": [
+      "expo-router",
+      "onnxruntime-react-native"
+    ]
+  }
+}
