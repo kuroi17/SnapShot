@@ -4,7 +4,7 @@ import { Win95Window } from '../ui/Win95Window'
 
 export function ContributingSection() {
   return (
-    <section className="flex flex-col items-center px-4 py-24">
+    <section className="flex flex-col items-center px-4 py-12 md:py-16 pb-24">
       <motion.div
         initial={{ opacity: 0, y: 16 }}
         whileInView={{ opacity: 1, y: 0 }}

@@ -1,9 +1,15 @@
-import { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Download, ChevronDown, ExternalLink, Loader2, AlertCircle } from 'lucide-react';
-import { useGitHubRelease } from '../../hooks/useGitHubRelease';
-import { Button } from '../ui/Button';
-import { Badge } from '../ui/Badge';
+import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  Download,
+  ChevronDown,
+  ExternalLink,
+  Loader2,
+  AlertCircle,
+} from "lucide-react";
+import { useGitHubRelease } from "../../hooks/useGitHubRelease";
+import { Button } from "../ui/Button";
+import { Badge } from "../ui/Badge";
 
 export function DownloadCard() {
   const { desktopRelease, loading, error } = useGitHubRelease();
@@ -14,11 +20,19 @@ export function DownloadCard() {
     <section id="download" className="flex flex-col items-center px-4 py-24">
       <div className="win95-bevel-outset inline-flex w-full max-w-md flex-col">
         <div className="win95-titlebar flex items-center gap-1 px-1 py-0.5 text-[11px] select-none">
-          <span className="flex-shrink-0 w-4 h-4 flex items-center justify-center text-[10px]">⬇</span>
-          <span className="flex-1 truncate tracking-normal font-retro">Download SnapShot</span>
+          <span className="flex-shrink-0 w-4 h-4 flex items-center justify-center text-[10px]">
+            ⬇
+          </span>
+          <span className="flex-1 truncate tracking-normal font-retro">
+            Download SnapShot
+          </span>
           <div className="flex items-center gap-[2px]">
-            <button className="win95-titlebar-btn" aria-label="Minimize">_</button>
-            <button className="win95-titlebar-btn" aria-label="Close">&#10005;</button>
+            <button className="win95-titlebar-btn" aria-label="Minimize">
+              _
+            </button>
+            <button className="win95-titlebar-btn" aria-label="Close">
+              &#10005;
+            </button>
           </div>
         </div>
 
@@ -26,20 +40,25 @@ export function DownloadCard() {
           {loading ? (
             <div className="flex flex-col items-center gap-3 py-8">
               <Loader2 className="h-6 w-6 animate-spin text-win95-shadow" />
-              <span className="text-[11px] font-sans text-win95-dark-shadow">Fetching latest release...</span>
+              <span className="text-[11px] font-sans text-win95-dark-shadow">
+                Fetching latest release...
+              </span>
             </div>
           ) : (
             <>
               <div className="flex items-start justify-between gap-3">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
-                    <Badge variant="win95">{release?.version || 'v1.0.0'}</Badge>
+                    <Badge variant="win95">
+                      {release?.version || "v1.0.0"}
+                    </Badge>
                     <span className="text-[10px] font-mono text-win95-dark-shadow">
-                      {release?.publishedAt || 'July 2026'}
+                      {release?.publishedAt || "July 2026"}
                     </span>
                   </div>
                   <p className="text-[11px] font-sans text-win95-dark-shadow leading-relaxed mt-2">
-                    <span className="font-bold">Size:</span> {release?.fileSize || '158 MB'}
+                    <span className="font-bold">Size:</span>{" "}
+                    {release?.fileSize || "158 MB"}
                   </p>
                   <p className="text-[11px] font-sans text-win95-dark-shadow leading-relaxed">
                     <span className="font-bold">Platform:</span> Windows x64
@@ -48,7 +67,10 @@ export function DownloadCard() {
               </div>
 
               <a
-                href={release?.downloadUrl || 'https://github.com/kuroi17/SnapShot/releases'}
+                href={
+                  release?.downloadUrl ||
+                  "https://github.com/kuroi17/SnapShot/releases"
+                }
                 target="_blank"
                 rel="noopener noreferrer"
               >
@@ -57,7 +79,7 @@ export function DownloadCard() {
                   className="mt-3 w-full flex items-center justify-center gap-2"
                 >
                   <Download className="h-4 w-4" />
-                  Download {release?.version || 'v1.0.0'}
+                  Download {release?.version || "v1.0.0"}
                 </Button>
               </a>
 
@@ -86,7 +108,7 @@ export function DownloadCard() {
                   <motion.div
                     key="notes"
                     initial={{ height: 0, opacity: 0 }}
-                    animate={{ height: 'auto', opacity: 1 }}
+                    animate={{ height: "auto", opacity: 1 }}
                     exit={{ height: 0, opacity: 0 }}
                     transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
                     className="overflow-hidden"
@@ -105,18 +127,6 @@ export function DownloadCard() {
                   </motion.div>
                 )}
               </AnimatePresence>
-
-              <div className="mt-3 pt-2 border-t border-win95-shadow/30">
-                <a
-                  href="https://github.com/kuroi17/SnapShot/releases"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center justify-center gap-1 text-[10px] font-sans text-accent-blue hover:underline"
-                >
-                  <ExternalLink className="h-3 w-3" />
-                  View all releases on GitHub
-                </a>
-              </div>
             </>
           )}
         </div>

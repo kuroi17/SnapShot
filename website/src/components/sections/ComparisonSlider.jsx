@@ -34,7 +34,7 @@ export function ComparisonSlider() {
   }, [dragging, handleMove]);
 
   return (
-    <section className="flex flex-col items-center px-4 py-24">
+    <section className="flex flex-col items-center px-4 py-12 md:py-16">
       <div className="mb-8 text-center">
         <h2 className="font-sans text-2xl font-bold tracking-tight text-text-main md:text-3xl">
           Raw capture vs AI cutout
