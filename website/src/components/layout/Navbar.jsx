@@ -1,6 +1,5 @@
-import { motion } from 'framer-motion';
-import { ExternalLink, Download } from 'lucide-react';
-import { Button } from '../ui/Button';
+import { motion } from "framer-motion";
+import { ExternalLink } from "lucide-react";
 
 export function Navbar() {
   return (
@@ -21,30 +20,6 @@ export function Navbar() {
             SnapShot
           </span>
         </a>
-
-        <div className="flex items-center gap-3">
-          <a
-            href="https://github.com/kuroi17/SnapShot"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-mono text-text-muted transition-colors hover:text-text-main"
-          >
-            <ExternalLink className="h-3.5 w-3.5" />
-            <span className="hidden sm:inline">kuroi17/SnapShot</span>
-          </a>
-
-          <Button
-            variant="glow"
-            size="sm"
-            onClick={() => {
-              document.getElementById('download')?.scrollIntoView({ behavior: 'smooth' });
-            }}
-            className="flex items-center gap-1.5"
-          >
-            <Download className="h-3.5 w-3.5" />
-            Download
-          </Button>
-        </div>
       </div>
     </motion.nav>
   );

@@ -3,7 +3,8 @@ name: Build & Release SnapShot
 on:
   push:
     tags:
-      - 'v*'
+      - 'desktop-v*'
+      - 'mobile-v*'
   workflow_dispatch:
 
 permissions:
@@ -18,22 +19,37 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Setup .NET 10 SDK
+        if: startsWith(github.ref_name, 'desktop-v')
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '10.0.x'
 
       - name: Restore dependencies
+        if: startsWith(github.ref_name, 'desktop-v')
         run: dotnet restore desktop/src/SnapShot.csproj
 
       - name: Publish Standalone Executable
+        if: startsWith(github.ref_name, 'desktop-v')
         run: dotnet publish desktop/src/SnapShot.csproj -c Release -r win-x64 --self-contained false -p:PublishSingleFile=true -o publish/
 
-      - name: Create GitHub Release
+      - name: Create Desktop GitHub Release
+        if: startsWith(github.ref_name, 'desktop-v')
         id: create_release
         uses: softprops/action-gh-release@v2
         with:
           files: publish/SnapShot.exe
-          name: SnapShot ${{ github.ref_name }}
+          name: SnapShot Desktop ${{ github.ref_name }}
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create Mobile GitHub Release
+        if: startsWith(github.ref_name, 'mobile-v')
+        uses: softprops/action-gh-release@v2
+        with:
+          name: SnapShot Mobile ${{ github.ref_name }}
           draft: false
           prerelease: false
           generate_release_notes: true

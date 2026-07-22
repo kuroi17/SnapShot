@@ -1,5 +1,7 @@
 import { useRef, useState, useCallback, useEffect } from 'react';
 import { MoveHorizontal } from 'lucide-react';
+import rawCapture from '../../assets/RawCapture.png';
+import aiCutout from '../../assets/AICutout.png';
 
 export function ComparisonSlider() {
   const containerRef = useRef(null);
@@ -34,10 +36,7 @@ export function ComparisonSlider() {
   return (
     <section className="flex flex-col items-center px-4 py-24">
       <div className="mb-8 text-center">
-        <span className="font-mono text-[11px] uppercase tracking-[0.18em] text-accent-cyan">
-          See the Difference
-        </span>
-        <h2 className="mt-2 font-sans text-2xl font-bold tracking-tight text-text-main md:text-3xl">
+        <h2 className="font-sans text-2xl font-bold tracking-tight text-text-main md:text-3xl">
           Raw capture vs AI cutout
         </h2>
       </div>
@@ -58,7 +57,7 @@ export function ComparisonSlider() {
           }}
         >
           <img
-            src="/Visualization.jpg"
+            src={rawCapture}
             alt="Original raw screenshot capture"
             className="absolute inset-0 h-full w-full object-cover"
             draggable={false}
@@ -69,7 +68,7 @@ export function ComparisonSlider() {
             style={{ width: `${sliderPos}%` }}
           >
             <img
-              src="/Visualization.jpg"
+              src={aiCutout}
               alt="Background removed cutout"
               className="absolute top-0 left-0 h-full w-full object-cover"
               style={{

@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { Download, ExternalLink } from 'lucide-react';
+import { Download } from 'lucide-react';
 import { Button } from '../ui/Button';
 
 export function HeroSection() {
@@ -61,22 +61,8 @@ export function HeroSection() {
           className="flex items-center gap-2"
         >
           <Download className="h-4 w-4" />
-          Download SnapShot.exe
+          Get SnapShot
         </Button>
-        <a
-          href="https://github.com/kuroi17/SnapShot"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Button
-            variant="win95"
-            size="lg"
-            className="flex items-center gap-2"
-          >
-            <ExternalLink className="h-4 w-4" />
-            View on GitHub
-          </Button>
-        </a>
       </motion.div>
     </section>
   );

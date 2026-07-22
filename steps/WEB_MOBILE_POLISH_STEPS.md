@@ -1,39 +1,49 @@
-# 🚀 SnapShot Web & Mobile Release Polish — Execution Steps
+# 🚀 SnapShot Website Polish & Dual-Release Automation Plan
 
-This document outlines the step-by-step plan to implement prefix-based automated releases, update the website's layout/sections, and integrate mobile downloads.
+This document details the step-by-step execution plan to update CI/CD release workflows, publish the `mobile-v1.0.0` release tag, refactor the website API release hook, and streamline the website layout.
+
+---
+
+## 📌 Architectural Overview
+
+```text
+┌─────────────────────────────────────────────────────────────┐
+│                    SnapShot Monorepo                        │
+│                                                             │
+│   desktop/              mobile/              website/       │
+└───────┬────────────────────┬────────────────────┬───────────┘
+        │                    │                    │
+        ▼                    ▼                    ▼
+desktop-v1.0.0         mobile-v1.0.0        Website API Hook
+        │                    │             (Fetches /releases)
+        ▼                    ▼                    │
+GitHub Desktop Release  GitHub Mobile Release ─────┘
+  (SnapShot.exe)          (Release Asset)
+```
 
 ---
 
 ## 🛠️ Global Frontend Skills Integration Strategy
 
-To ensure world-class quality, design taste, and engineering excellence, the agent executing this plan MUST strictly incorporate the following global skills:
+The agent executing this plan MUST strictly incorporate and maximize the following global skills:
 
-| Skill | Primary Usage & Application |
+| Skill | Application |
 | :--- | :--- |
-| **`design-taste-frontend`** | Ensure the tabbed Win95 download component and visual shortcut window look highly-polished, premium, and authentic to retro-classic style. |
-| **`minimalist-ui`** | Remove redundant buttons/links, collapse duplicates, and clean up visual clutter across sections. |
-| **`ui-ux-pro-max`** | Create smooth tab switching transitions in the installation component and coordinate fluid handle dragging in the comparison slider. |
-| **`react-expert`** | Refactor the GitHub release service hook to fetch and filter multiple releases cleanly without memory leaks or race conditions. |
-| **`web-design-guidelines`** | Maintain full responsiveness, proper semantic tags, and fast page speeds. |
-| **`expo-ui`** | Keep the mobile release info aligned with standard Expo app properties (e.g. bundle size, platforms). |
+| **`design-taste-frontend`** | Ensure the dual-tab Win95 Installation window matches Attached Image 2 with authentic 3D bevels, titlebar gradients, and zero generic look. |
+| **`minimalist-ui`** | Remove all duplicate/redundant download buttons, consolidated to 1 key CTA in Hero and single direct downloads in the Installation tabs. |
+| **`ui-ux-pro-max`** | Smooth tab transitions between Desktop and Mobile in the Installation window, and clean handle dragging in the Comparison Slider. |
+| **`react-expert`** | Refactor `useGitHubRelease.js` hook to fetch `/releases` array, filtering for `desktop-` and `mobile-` tags with clean error boundaries and fallback data. |
+| **`web-design-guidelines`** | Maintain 100% mobile responsiveness, fast FCP, and semantic HTML structure. |
 
 ---
 
-## 📑 Execution Phase Breakdown
-
-```mermaid
-graph TD
-    Phase1[Phase 1: CI/CD Pipeline Update] --> Phase2[Phase 2: Mobile Tag Release]
-    Phase2 --> Phase3[Phase 3: Web Releases Fetcher Hook]
-    Phase3 --> Phase4[Phase 4: Web UI Section Refactor & Tabbed Installation]
-    Phase4 --> Phase5[Phase 5: Build Verification & Final QA]
-```
+## 📑 Execution Phases
 
 ---
 
-## 🛠️ Phase 1: CI/CD Pipeline Update (`release.yml`)
+### ⚙️ Phase 1 — CI/CD Pipeline Update (`.github/workflows/release.yml`)
 
-Update the GitHub Actions workflow file `.github/workflows/release.yml` to support prefix-based tags:
+Update `.github/workflows/release.yml` to support prefix-based tags for both Desktop and Mobile:
 
 1. **Trigger Configuration**:
    ```yaml
@@ -42,63 +52,84 @@ Update the GitHub Actions workflow file `.github/workflows/release.yml` to suppo
        tags:
          - 'desktop-v*'
          - 'mobile-v*'
+         - 'v*'
      workflow_dispatch:
    ```
-2. **Conditional Execution**:
-   - If tag starts with `desktop-v*`: Run checkout, setup .NET, publish standalone `SnapShot.exe`, create GitHub Release named `SnapShot Desktop ${{ github.ref_name }}`, and upload the `.exe` asset.
-   - If tag starts with `mobile-v*`: Create a GitHub Release named `SnapShot Mobile ${{ github.ref_name }}` (for hosting mobile release details/notes).
+2. **Job Definition**:
+   - Configure conditional workflow steps so that:
+     - When tag matches `desktop-v*` or `v*`: Restores, publishes `desktop/src/SnapShot.csproj` into `SnapShot.exe`, and creates a GitHub Release named `SnapShot Desktop ${{ github.ref_name }}` attaching `SnapShot.exe`.
+     - When tag matches `mobile-v*`: Creates a GitHub Release named `SnapShot Mobile ${{ github.ref_name }}` with mobile release notes and assets.
 
 ---
 
-## 🏷️ Phase 2: Mobile Tag Release Trigger
+### 🏷️ Phase 2 — Publish Mobile Release Tag (`mobile-v1.0.0`)
 
-Trigger the official release of the mobile app to set up the releases history:
+Push the official `mobile-v1.0.0` release tag to trigger the new CI/CD workflow:
 
-1. Stage all pending mobile app codebase changes.
-2. Tag the repository with the first mobile tag:
+1. Prepare release notes for `mobile-v1.0.0`:
+   - 📱 **SnapShot Mobile v1.0.0** — React Native + Expo App
+   - 🤖 **100% Local On-Device AI Background Removal** (ONNX Runtime Mobile, <150ms inference)
+   - 🎛️ **Touch-Optimized Refinement Canvas** (Skia drawing, pinch-zoom, Restore/Remove brushes)
+   - 📋 **Direct Clipboard Output & Native Share Sheet**
+   - 🔔 **Win95 Success Toasts & Exception Screens**
+2. Run Git commands:
    ```powershell
-   git tag mobile-v1.0.0
+   git tag -a mobile-v1.0.0 -m "SnapShot Mobile v1.0.0 Release"
    git push origin mobile-v1.0.0
    ```
 
 ---
 
-## 🔌 Phase 3: Web Releases Fetcher Hook (`useGitHubRelease.js`)
+### 🔌 Phase 3 — Web API Release Hook Refactor (`useGitHubRelease.js`)
 
-Refactor `website/src/hooks/useGitHubRelease.js` (or ts) to fetch `/releases` instead of `/releases/latest` to cleanly separate desktop and mobile releases:
+Refactor `website/src/hooks/useGitHubRelease.js` to fetch `/releases` and return separate metadata for both Desktop and Mobile:
 
-1. **API URL**: `https://api.github.com/repos/kuroi17/SnapShot/releases`
+1. **Endpoint**: `https://api.github.com/repos/kuroi17/SnapShot/releases`
 2. **Filtering Logic**:
-   - Parse all releases.
-   - Find the first release object where `tag_name` starts with `desktop-v`. Extract its version, date, direct `.exe` download URL, and release notes.
-   - Find the first release object where `tag_name` starts with `mobile-v`. Extract its version, date, and release notes.
-3. **Graceful Fallbacks**: Provide static defaults if the API rate limit is reached or network is offline.
+   - `desktopRelease`: Find release where `tag_name` starts with `desktop-v` (or fallback to legacy `v1.0.0` / `1.0.0`). Extract version tag, published date, size, and `.exe` download URL.
+   - `mobileRelease`: Find release where `tag_name` starts with `mobile-v`. Extract version tag, published date, size, and download URL.
+3. **Return State**: `{ desktopRelease, mobileRelease, loading, error }` with fallback defaults if offline.
 
 ---
 
-## 🎨 Phase 4: Web UI Section Refactor & Tabbed Installation Component
+### 🎨 Phase 4 — Website Layout Streamlining & Section Refactor
 
-Revise the landing page sections to eliminate duplicates and organize them in a logical, zero-friction flow:
+Restructure `website/src/App.jsx` and section components into the exact sequence:
 
-### 1. Structure Sequence
-* **Hero Section**: Headline, pixel camera, unified CTAs (remove duplicate download buttons, keep one key entry point).
-* **Before / After Slider**: Update `ComparisonSlider.jsx` to load `RawCapture.png` and `AICutout.png` to clearly show differences.
-* **The Workflow (How to Use)**: Step-by-step visual grid mapping the screen capture to paste workflow.
-* **Key Features**: Clean grid (Local AI, sub-100ms ONNX speed, privacy).
-* **Installation (Double-Tab Win95 Window)**:
-  * Implement a tabbed Win95 panel with two tabs:
-    * **Desktop**: Displays direct Windows `.exe` download, file size, release date, and platform specifications.
-    * **Mobile**: Displays version, release date, platform specifications, and direct link to install/test (EAS/APK).
-* **Keyboard Shortcuts Section**: Interactive visual window listing all shortcuts with `<kbd>` retro keycap styling.
-* **Contributing & Footer**: Clean bottom section.
+#### 1. **Hero Section (`HeroSection.jsx`)**
+- Clean minimal header with retro camera logo (`snapshot_icon.png`), headline, and single CTA button navigating to the Installation section.
+- **Remove all duplicate buttons**.
+
+#### 2. **Comparison Slider (`ComparisonSlider.jsx`)**
+- Use `RawCapture.png` for raw screenshot (left) and `AICutout.png` for background-removed cutout (right).
+- Header: `"Raw capture vs AI cutout"`.
+
+#### 3. **Key Features & Keyboard Shortcuts Combined (`FeaturesAndShortcuts.jsx`)**
+- Pair features directly with their corresponding hotkeys inside Win95 retro window cards:
+  - 🚀 **Global Screen Capture**: `Ctrl + Shift + S`
+  - ⚡ **Instant Copy & Close**: `Ctrl + C`
+  - ↩️ **Undo / Redo Edit History**: `Ctrl + Z` / `Ctrl + Y`
+  - 🔍 **Figma-Style Canvas Pan**: `Ctrl + Left-Click Drag`
+  - 🧠 **100% Local AI Background Removal**: Powered by `u2netp` ONNX (<100ms inference)
+
+#### 4. **Installation Section (`InstallationSection.jsx` - Dual-Tab Win95 Window)**
+- A Win95 window container matching Attached Image 2 with two interactive tabs:
+  - **Tab 1 — Desktop**: Displays `desktopRelease` version badge, published date, file size (158.3 MB), platform (Windows x64), direct `.exe` download button, and expandable release notes.
+  - **Tab 2 — Mobile**: Displays `mobileRelease` version badge (`mobile-v1.0.0`), published date, file size, platform (Android / iOS), direct download link to release assets, and mobile instructions.
+
+#### 5. **Contributing Section (`ContributingSection.jsx`)**
+- Open-source GitHub repository card at the bottom with star count link.
+
+#### 6. **Footer (`Footer.jsx`)**
+- Retro Win95 Taskbar style footer with live clock and copyright.
 
 ---
 
-## 🧪 Phase 5: Build Verification & Final QA
+### 🧪 Phase 5 — Build Verification & Final QA
 
 1. Run production build in `website/`:
    ```powershell
    cd website
    npm run build
    ```
-2. Verify 0 lint warnings, 0 compile errors, and that assets load correctly.
+2. Verify 0 lint warnings, 0 compile errors, clean component rendering, and responsive layout across mobile and desktop viewports.

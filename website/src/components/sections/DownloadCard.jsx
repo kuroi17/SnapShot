@@ -6,7 +6,8 @@ import { Button } from '../ui/Button';
 import { Badge } from '../ui/Badge';
 
 export function DownloadCard() {
-  const { release, loading, error } = useGitHubRelease();
+  const { desktopRelease, loading, error } = useGitHubRelease();
+  const release = desktopRelease;
   const [notesOpen, setNotesOpen] = useState(false);
 
   return (

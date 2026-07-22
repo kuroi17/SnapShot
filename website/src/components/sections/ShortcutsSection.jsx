@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion';
 import { Monitor, Copy, Undo2, Hand, ArrowRightFromLine } from 'lucide-react';
+import { Win95Window } from '../ui/Win95Window';
 
 const shortcuts = [
   {
@@ -46,13 +47,13 @@ const cardVariants = {
   },
 };
 
-function Kbd({ children, className = '' }) {
+function Kbd({ children }) {
   return (
     <kbd
-      className={`inline-flex items-center justify-center min-w-[22px] h-[22px] px-1.5 text-[10px] font-mono leading-none select-none
+      className="inline-flex items-center justify-center min-w-[22px] h-[22px] px-1.5 text-[10px] font-mono leading-none select-none
         border-t-[2px] border-l-[2px] border-r-[2px] border-b-[2px]
         border-t-win95-light border-l-win95-light border-r-win95-dark-shadow border-b-win95-dark-shadow
-        bg-win95-bg text-black ${className}`}
+        bg-win95-bg text-black"
     >
       {children}
     </kbd>
@@ -77,62 +78,64 @@ export function ShortcutsSection() {
         </p>
       </motion.div>
 
-      <motion.div
-        variants={containerVariants}
-        initial="hidden"
-        whileInView="visible"
-        viewport={{ once: true, amount: 0.2 }}
-        className="grid w-full max-w-4xl grid-cols-1 gap-3 sm:grid-cols-2"
-      >
-        {shortcuts.map((shortcut) => {
-          const Icon = shortcut.icon;
-          return (
-            <motion.div
-              key={shortcut.label}
-              variants={cardVariants}
-              className="win95-bevel-outset flex items-start gap-3 bg-win95-bg p-4 text-black transition-all duration-200 hover:translate-y-[-2px]"
-            >
-              <div className="win95-bevel-inset flex h-9 w-9 shrink-0 items-center justify-center bg-white/30">
-                <Icon className="h-4 w-4" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex flex-wrap items-center gap-1">
-                  {shortcut.keys.map((key, i) => (
-                    <span key={key} className="flex items-center gap-1">
-                      <Kbd>{key}</Kbd>
-                      {i < shortcut.keys.length - 1 && (
-                        <span className="text-[10px] font-mono text-win95-dark-shadow">+</span>
-                      )}
-                    </span>
-                  ))}
+      <Win95Window title="Keyboard Shortcuts" className="w-full max-w-4xl">
+        <motion.div
+          variants={containerVariants}
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, amount: 0.2 }}
+          className="grid grid-cols-1 gap-3 sm:grid-cols-2"
+        >
+          {shortcuts.map((shortcut) => {
+            const Icon = shortcut.icon;
+            return (
+              <motion.div
+                key={shortcut.label}
+                variants={cardVariants}
+                className="win95-bevel-outset flex items-start gap-3 bg-win95-bg p-4 text-black transition-all duration-200"
+              >
+                <div className="win95-bevel-inset flex h-9 w-9 shrink-0 items-center justify-center bg-white/30">
+                  <Icon className="h-4 w-4" />
                 </div>
-                <h3 className="mt-1.5 text-[11px] font-sans font-bold leading-tight">
-                  {shortcut.label}
-                </h3>
-                <p className="mt-0.5 text-[10px] font-sans leading-relaxed text-win95-dark-shadow">
-                  {shortcut.description}
-                </p>
-
-                {shortcut.secondary && (
-                  <div className="mt-2 flex flex-wrap items-center gap-1 border-t border-win95-shadow/20 pt-2">
-                    {shortcut.secondary.keys.map((key, i) => (
+                <div className="flex-1 min-w-0">
+                  <div className="flex flex-wrap items-center gap-1">
+                    {shortcut.keys.map((key, i) => (
                       <span key={key} className="flex items-center gap-1">
                         <Kbd>{key}</Kbd>
-                        {i < shortcut.secondary.keys.length - 1 && (
+                        {i < shortcut.keys.length - 1 && (
                           <span className="text-[10px] font-mono text-win95-dark-shadow">+</span>
                         )}
                       </span>
                     ))}
-                    <span className="ml-0.5 text-[10px] font-sans text-win95-dark-shadow">
-                      {shortcut.secondary.label}
-                    </span>
                   </div>
-                )}
-              </div>
-            </motion.div>
-          );
-        })}
-      </motion.div>
+                  <h3 className="mt-1.5 text-[11px] font-sans font-bold leading-tight">
+                    {shortcut.label}
+                  </h3>
+                  <p className="mt-0.5 text-[10px] font-sans leading-relaxed text-win95-dark-shadow">
+                    {shortcut.description}
+                  </p>
+
+                  {shortcut.secondary && (
+                    <div className="mt-2 flex flex-wrap items-center gap-1 border-t border-win95-shadow/20 pt-2">
+                      {shortcut.secondary.keys.map((key, i) => (
+                        <span key={key} className="flex items-center gap-1">
+                          <Kbd>{key}</Kbd>
+                          {i < shortcut.secondary.keys.length - 1 && (
+                            <span className="text-[10px] font-mono text-win95-dark-shadow">+</span>
+                          )}
+                        </span>
+                      ))}
+                      <span className="ml-0.5 text-[10px] font-sans text-win95-dark-shadow">
+                        {shortcut.secondary.label}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </motion.div>
+            );
+          })}
+        </motion.div>
+      </Win95Window>
     </section>
   );
 }

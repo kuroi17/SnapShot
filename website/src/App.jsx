@@ -1,10 +1,10 @@
 import { Navbar } from "./components/layout/Navbar"
 import { Footer } from "./components/layout/Footer"
 import { HeroSection } from "./components/sections/HeroSection"
-import { DownloadCard } from "./components/sections/DownloadCard"
 import { ComparisonSlider } from "./components/sections/ComparisonSlider"
-import { FeaturesGrid } from "./components/sections/FeaturesGrid"
-import { ShortcutsSection } from "./components/sections/ShortcutsSection"
+import { FeaturesAndShortcuts } from "./components/sections/FeaturesAndShortcuts"
+import { InstallationSection } from "./components/sections/InstallationSection"
+import { ContributingSection } from "./components/sections/ContributingSection"
 
 function App() {
   return (
@@ -12,10 +12,10 @@ function App() {
       <Navbar />
       <main className="flex-1">
         <HeroSection />
-        <FeaturesGrid />
         <ComparisonSlider />
-        <DownloadCard />
-        <ShortcutsSection />
+        <FeaturesAndShortcuts />
+        <InstallationSection />
+        <ContributingSection />
       </main>
       <Footer />
     </div>
