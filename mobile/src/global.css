@@ -2,6 +2,15 @@
 @tailwind components;
 @tailwind utilities;
 
+html, body, #root {
+  background-color: #0c0d0e !important;
+  color: #f3f4f6;
+  min-height: 100vh;
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden;
+}
+
 @layer utilities {
   .win95-bevel-outset {
     border-width: 2px;

@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import Animated, {
   useSharedValue,
@@ -5,36 +6,43 @@ import Animated, {
   withSpring,
   runOnJS,
 } from "react-native-reanimated";
-import { Dimensions, View } from "react-native";
+import { useWindowDimensions, View, Text } from "react-native";
 import * as Haptics from "expo-haptics";
-import { SymbolView } from "expo-symbols";
 import { useRouter } from "expo-router";
 
-const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
 const TRIGGER_SIZE = 56;
 const EDGE_MARGIN = 12;
-
 const SPRING_CONFIG = { stiffness: 200, damping: 20, mass: 0.5 };
 
 export function FloatingTrigger() {
   const router = useRouter();
+  const { width: screenWidth, height: screenHeight } = useWindowDimensions();
 
-  const translateX = useSharedValue(SCREEN_WIDTH - TRIGGER_SIZE - EDGE_MARGIN);
-  const translateY = useSharedValue(SCREEN_HEIGHT * 0.4);
+  const translateX = useSharedValue(screenWidth - TRIGGER_SIZE - EDGE_MARGIN);
+  const translateY = useSharedValue(screenHeight * 0.4);
   const scale = useSharedValue(1);
 
+  useEffect(() => {
+    translateX.value = withSpring(screenWidth - TRIGGER_SIZE - EDGE_MARGIN, SPRING_CONFIG);
+    translateY.value = withSpring(Math.min(translateY.value, screenHeight - TRIGGER_SIZE - EDGE_MARGIN), SPRING_CONFIG);
+  }, [screenWidth, screenHeight]);
+
   const triggerHaptic = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    try {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    } catch {
+      // Haptics unavailable on web
+    }
   };
 
   const snapToEdge = (x: number, y: number) => {
     const snapX =
-      x + TRIGGER_SIZE / 2 < SCREEN_WIDTH / 2
+      x + TRIGGER_SIZE / 2 < screenWidth / 2
         ? EDGE_MARGIN
-        : SCREEN_WIDTH - TRIGGER_SIZE - EDGE_MARGIN;
+        : screenWidth - TRIGGER_SIZE - EDGE_MARGIN;
     const clampedY = Math.max(
       EDGE_MARGIN,
-      Math.min(y, SCREEN_HEIGHT - TRIGGER_SIZE - EDGE_MARGIN)
+      Math.min(y, screenHeight - TRIGGER_SIZE - EDGE_MARGIN)
     );
     translateX.value = withSpring(snapX, SPRING_CONFIG);
     translateY.value = withSpring(clampedY, SPRING_CONFIG);
@@ -78,11 +86,17 @@ export function FloatingTrigger() {
   return (
     <GestureDetector gesture={composed}>
       <Animated.View
-        className="absolute z-50 items-center justify-center rounded-full"
         style={[
           {
+            position: "absolute",
+            top: 0,
+            left: 0,
+            zIndex: 9999,
             width: TRIGGER_SIZE,
             height: TRIGGER_SIZE,
+            alignItems: "center",
+            justifyContent: "center",
+            borderRadius: 9999,
             backgroundColor: "rgba(0, 240, 255, 0.15)",
             borderWidth: 2,
             borderColor: "rgba(0, 240, 255, 0.5)",
@@ -95,20 +109,9 @@ export function FloatingTrigger() {
           animatedStyle,
         ]}
       >
-        <SymbolView
-          name={{
-            ios: "camera.fill",
-            android: "photo_camera",
-            web: "photo_camera",
-          }}
-          tintColor="#00f0ff"
-          size={26}
-          fallback={
-            <View className="items-center justify-center">
-              <Animated.Text className="text-[26px]">📷</Animated.Text>
-            </View>
-          }
-        />
+        <View className="items-center justify-center">
+          <Text style={{ fontSize: 24, color: "#00f0ff" }}>📷</Text>
+        </View>
       </Animated.View>
     </GestureDetector>
   );

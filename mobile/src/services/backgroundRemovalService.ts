@@ -24,7 +24,7 @@ async function readImagePixels(imageUri: string): Promise<{
     encoding: EncodingType.Base64,
   });
   const raw = toByteArray(base64);
-  const decoded = decodeJPEG(raw, true);
+  const decoded = decodeJPEG(raw, { useTArray: true });
 
   return {
     pixels: new Uint8Array(

@@ -1,16 +1,34 @@
-declare module "*.css" {}
+/// <reference types="nativewind/types" />
+
+import "react-native";
+
+declare module "react-native" {
+  interface ViewProps {
+    className?: string;
+  }
+  interface TextProps {
+    className?: string;
+  }
+  interface ImageProps {
+    className?: string;
+  }
+  interface ScrollViewProps {
+    className?: string;
+  }
+  interface TouchableOpacityProps {
+    className?: string;
+  }
+  interface TextInputProps {
+    className?: string;
+  }
+}
+
 declare module "*.onnx" {
-  const value: number;
+  const value: any;
   export default value;
 }
-declare module "jpeg-js" {
-  import type { RawImageData } from "jpeg-js";
-  export function decode(
-    data: ArrayLike<number> | ArrayBuffer,
-    useTypedArray: true
-  ): RawImageData<Uint8Array>;
-  export function encode(
-    imgData: RawImageData<Uint8Array | Buffer>,
-    qu?: number
-  ): RawImageData<Buffer>;
+
+declare module "*.css" {
+  const content: any;
+  export default content;
 }
