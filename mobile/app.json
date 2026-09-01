@@ -36,8 +36,15 @@
       "bundler": "metro"
     },
     "plugins": [
-      "expo-router",
-      "onnxruntime-react-native"
-    ]
+      "expo-router"
+    ],
+    "updates": {
+      "enabled": false
+    },
+    "extra": {
+      "router": {
+        "origin": false
+      }
+    }
   }
 }

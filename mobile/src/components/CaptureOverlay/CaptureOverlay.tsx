@@ -1,5 +1,5 @@
 import { useRef, useCallback, useEffect, useState } from "react";
-import { View, Text, Dimensions } from "react-native";
+import { View, Text, useWindowDimensions, Platform } from "react-native";
 import { BlurView } from "expo-blur";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import Animated, {
@@ -16,14 +16,8 @@ import * as Haptics from "expo-haptics";
 import { captureRef } from "react-native-view-shot";
 import { Button } from "../ui/Button";
 
-const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
 const HANDLE_SIZE = 44;
 const MARQUEE_MIN = 80;
-
-const INITIAL_W = SCREEN_WIDTH * 0.7;
-const INITIAL_H = SCREEN_HEIGHT * 0.4;
-const INITIAL_X = (SCREEN_WIDTH - INITIAL_W) / 2;
-const INITIAL_Y = (SCREEN_HEIGHT - INITIAL_H) / 3;
 
 type Anchor = -1 | 0 | 1;
 
@@ -44,7 +38,13 @@ function MarqueeHandle({
 }) {
   const prevX = useSharedValue(0);
   const prevY = useSharedValue(0);
-  const haptic = () => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+  const haptic = () => {
+    try {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    } catch {
+      // Haptics unavailable on web
+    }
+  };
 
   const panGesture = Gesture.Pan()
     .onBegin(() => {
@@ -74,12 +74,16 @@ function MarqueeHandle({
 
   const handleStyle = useAnimatedStyle(() => {
     const offX =
-      anchorX === -1 ? -HANDLE_SIZE / 2
-        : anchorX === 0 ? mw.value / 2 - HANDLE_SIZE / 2
+      anchorX === -1
+        ? -HANDLE_SIZE / 2
+        : anchorX === 0
+        ? mw.value / 2 - HANDLE_SIZE / 2
         : mw.value - HANDLE_SIZE / 2;
     const offY =
-      anchorY === -1 ? -HANDLE_SIZE / 2
-        : anchorY === 0 ? mh.value / 2 - HANDLE_SIZE / 2
+      anchorY === -1
+        ? -HANDLE_SIZE / 2
+        : anchorY === 0
+        ? mh.value / 2 - HANDLE_SIZE / 2
         : mh.value - HANDLE_SIZE / 2;
     return {
       position: "absolute" as const,
@@ -96,16 +100,7 @@ function MarqueeHandle({
         className="absolute items-center justify-center"
         style={handleStyle}
       >
-        <View
-          className="w-3 h-3 bg-accentCyan rounded-sm"
-          style={{
-            shadowColor: "#00f0ff",
-            shadowOffset: { width: 0, height: 0 },
-            shadowOpacity: 0.9,
-            shadowRadius: 6,
-            elevation: 6,
-          }}
-        />
+        <View className="w-3.5 h-3.5 bg-accentCyan rounded-sm shadow-md" />
       </Animated.View>
     </GestureDetector>
   );
@@ -113,33 +108,35 @@ function MarqueeHandle({
 
 export function CaptureOverlay() {
   const router = useRouter();
+  const { width: screenWidth, height: screenHeight } = useWindowDimensions();
   const captureRefLocal = useRef<View>(null);
 
-  const mx = useSharedValue(INITIAL_X);
-  const my = useSharedValue(INITIAL_Y);
-  const mw = useSharedValue(INITIAL_W);
-  const mh = useSharedValue(INITIAL_H);
-  const borderOpacity = useSharedValue(0.3);
+  const initialW = screenWidth * 0.7;
+  const initialH = screenHeight * 0.4;
+  const initialX = (screenWidth - initialW) / 2;
+  const initialY = (screenHeight - initialH) / 3;
 
+  const mx = useSharedValue(initialX);
+  const my = useSharedValue(initialY);
+  const mw = useSharedValue(initialW);
+  const mh = useSharedValue(initialH);
+
+  const borderOpacity = useSharedValue(0.6);
   const [dimLabel, setDimLabel] = useState("");
 
   useEffect(() => {
     borderOpacity.value = withRepeat(
-      withTiming(1, { duration: 900 }),
+      withTiming(1, { duration: 800 }),
       -1,
       true
     );
   }, []);
 
   useAnimatedReaction(
-    () => ({
-      w: Math.round(mw.value),
-      h: Math.round(mh.value),
-    }),
-    (cur) => {
-      runOnJS(setDimLabel)(`${cur.w} × ${cur.h}`);
-    },
-    [mw, mh]
+    () => ({ w: Math.round(mw.value), h: Math.round(mh.value) }),
+    (current) => {
+      runOnJS(setDimLabel)(`${current.w} × ${current.h}`);
+    }
   );
 
   const marqueeStyle = useAnimatedStyle(() => ({
@@ -149,19 +146,10 @@ export function CaptureOverlay() {
     width: mw.value,
     height: mh.value,
     borderWidth: 2,
+    borderColor: "#00f0ff",
     borderStyle: "dashed" as const,
-    borderColor: `rgba(0, 240, 255, ${borderOpacity.value})`,
+    opacity: borderOpacity.value,
     backgroundColor: "rgba(0, 240, 255, 0.04)",
-  }));
-
-  const glowStyle = useAnimatedStyle(() => ({
-    position: "absolute" as const,
-    left: mx.value - 4,
-    top: my.value - 4,
-    width: mw.value + 8,
-    height: mh.value + 8,
-    borderWidth: 1,
-    borderColor: `rgba(0, 240, 255, ${borderOpacity.value * 0.3})`,
   }));
 
   const labelStyle = useAnimatedStyle(() => ({
@@ -170,20 +158,46 @@ export function CaptureOverlay() {
     top: my.value - 28,
   }));
 
-  const handleCancel = useCallback(() => {
-    router.back();
-  }, [router]);
+  const glowStyle = useAnimatedStyle(() => ({
+    position: "absolute" as const,
+    left: mx.value - 4,
+    top: my.value - 4,
+    width: mw.value + 8,
+    height: mh.value + 8,
+    backgroundColor: "rgba(0, 240, 255, 0.08)",
+    borderRadius: 4,
+  }));
 
   const handleCapture = useCallback(async () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     try {
-      await captureRef(captureRefLocal.current, {
-        format: "png",
-        quality: 1,
-        result: "tmpfile",
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    } catch {
+      // ignore
+    }
+
+    try {
+      let resultUri = "";
+      if (Platform.OS !== "web" && captureRefLocal.current) {
+        resultUri = await captureRef(captureRefLocal, {
+          format: "png",
+          quality: 1,
+          result: "tmpfile",
+        });
+      }
+      router.push({
+        pathname: "/processing",
+        params: { imageUri: resultUri },
       });
     } catch {
-      // capture failed silently
+      router.push({ pathname: "/processing", params: { imageUri: "" } });
+    }
+  }, [router]);
+
+  const handleCancel = useCallback(() => {
+    try {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    } catch {
+      // ignore
     }
     router.back();
   }, [router]);
@@ -200,10 +214,22 @@ export function CaptureOverlay() {
   ];
 
   return (
-    <BlurView intensity={80} tint="dark" className="flex-1">
-      <View ref={captureRefLocal} className="flex-1" collapsable={false}>
-        <Animated.View style={glowStyle} pointerEvents="none" />
-        <Animated.View style={marqueeStyle} pointerEvents="none" />
+    <BlurView
+      intensity={90}
+      tint="dark"
+      style={{
+        position: "absolute",
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        zIndex: 9999,
+        backgroundColor: "rgba(12, 13, 14, 0.85)",
+      }}
+    >
+      <View ref={captureRefLocal} style={{ flex: 1, width: "100%", height: "100%" }} collapsable={false}>
+        <Animated.View style={[glowStyle, { pointerEvents: "none" }]} />
+        <Animated.View style={[marqueeStyle, { pointerEvents: "none" }]} />
 
         {anchors.map((a, i) => (
           <MarqueeHandle
@@ -217,25 +243,37 @@ export function CaptureOverlay() {
           />
         ))}
 
-        <Animated.View style={labelStyle} pointerEvents="none">
+        <Animated.View style={[labelStyle, { pointerEvents: "none" }]}>
           <View
-            className="bg-darkCard/90 px-2 py-0.5 rounded-sm"
+            className="bg-darkCard/95 px-2.5 py-1 rounded-sm"
             style={{
               borderWidth: 1,
-              borderColor: "rgba(0, 240, 255, 0.3)",
+              borderColor: "rgba(0, 240, 255, 0.4)",
             }}
           >
             <Text className="font-mono text-[11px] text-accentCyan font-bold">
-              {dimLabel || `${Math.round(INITIAL_W)} × ${Math.round(INITIAL_H)}`}
+              {dimLabel || `${Math.round(initialW)} × ${Math.round(initialH)}`}
             </Text>
           </View>
         </Animated.View>
 
-        <View className="absolute bottom-12 left-0 right-0 flex-row justify-center gap-4 px-6">
+        <View
+          style={{
+            position: "absolute",
+            bottom: 32,
+            left: 0,
+            right: 0,
+            zIndex: 10000,
+            flexDirection: "row",
+            justifyContent: "center",
+            gap: 16,
+            paddingHorizontal: 24,
+          }}
+        >
           <Button
             variant="glow"
             size="lg"
-            className="flex-1 max-w-[180]"
+            className="flex-1 max-w-[180px]"
             onPress={handleCapture}
           >
             Capture
@@ -243,7 +281,7 @@ export function CaptureOverlay() {
           <Button
             variant="ghost"
             size="lg"
-            className="flex-1 max-w-[180]"
+            className="flex-1 max-w-[180px]"
             onPress={handleCancel}
           >
             Cancel

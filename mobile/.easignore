@@ -1,0 +1,30 @@
+# Dependencies & Expo
+node_modules/
+.expo/
+dist/
+web-build/
+expo-env.d.ts
+*.log
+
+# Native folders – let EAS Linux runner generate these via expo prebuild
+android/
+ios/
+
+# Gradle build artifacts
+.gradle/
+**/android/.gradle/
+**/android/app/build/
+**/android/build/
+
+# Native generated secrets
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+*.orig.*
+
+# Metro & debug logs
+npm-debug.*
+yarn-debug.*
+yarn-error.*

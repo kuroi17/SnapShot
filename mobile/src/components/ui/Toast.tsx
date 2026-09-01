@@ -21,11 +21,6 @@ const variantStyles: Record<ToastVariant, string> = {
   error: "bg-darkCard border-red-500",
 };
 
-const variantGlow: Record<ToastVariant, string> = {
-  success: "#00f0ff",
-  error: "#ef4444",
-};
-
 const iconMap: Record<ToastVariant, string> = {
   success: "\u2713",
   error: "\u2715",
@@ -55,7 +50,6 @@ export function Toast({ visible, message, variant = "success" }: ToastProps) {
 
   return (
     <Animated.View
-      pointerEvents="none"
       style={[
         animatedStyle,
         {
@@ -64,6 +58,7 @@ export function Toast({ visible, message, variant = "success" }: ToastProps) {
           left: 20,
           right: 20,
           zIndex: 9999,
+          pointerEvents: "none",
         },
       ]}
     >
@@ -73,10 +68,10 @@ export function Toast({ visible, message, variant = "success" }: ToastProps) {
           variantStyles[variant]
         )}
         style={{
-          shadowColor: variantGlow[variant],
+          shadowColor: variant === "success" ? "#00f0ff" : "#ef4444",
           shadowOffset: { width: 0, height: 0 },
           shadowOpacity: 0.6,
-          shadowRadius: 12,
+          shadowRadius: 8,
           elevation: 10,
         }}
       >

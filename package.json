@@ -1,0 +1,11 @@
+{
+  "name": "snapshot-workspace",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "mobile": "npm --prefix mobile start",
+    "mobile:start": "npm --prefix mobile start",
+    "mobile:test": "npm --prefix mobile test",
+    "website": "npm --prefix website start"
+  }
+}
