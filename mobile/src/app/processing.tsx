@@ -86,6 +86,15 @@ export default function ProcessingScreen() {
         Haptics.notificationAsync(
           Haptics.NotificationFeedbackType.Success
         );
+
+        setTimeout(() => {
+          if (!cancelled) {
+            router.replace({
+              pathname: "/refine",
+              params: { imageUri: uri },
+            });
+          }
+        }, 500);
       } catch (err) {
         if (!cancelled) {
           const msg =

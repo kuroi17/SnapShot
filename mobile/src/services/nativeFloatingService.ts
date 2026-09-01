@@ -2,6 +2,10 @@ import { NativeModules, Platform } from "react-native";
 
 const { FloatingBubble } = NativeModules;
 
+export const isNativeOverlayActive = (): boolean => {
+  return Platform.OS === "android" && !!FloatingBubble?.showBubble;
+};
+
 export async function hasOverlayPermission(): Promise<boolean> {
   if (Platform.OS !== "android") return true;
   if (!FloatingBubble?.hasPermission) return true;

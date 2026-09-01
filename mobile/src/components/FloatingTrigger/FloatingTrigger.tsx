@@ -10,6 +10,7 @@ import { useWindowDimensions, View, Text } from "react-native";
 import * as Haptics from "expo-haptics";
 import { useRouter } from "expo-router";
 import { useService } from "../../services/ServiceContext";
+import { isNativeOverlayActive } from "../../services/nativeFloatingService";
 
 const TRIGGER_SIZE = 56;
 const EDGE_MARGIN = 12;
@@ -85,7 +86,9 @@ export function FloatingTrigger() {
     ],
   }));
 
-  if (!serviceActive) return null;
+  // When running on native Android with system overlay, the OS Foreground Service
+  // already renders the true floating camera bubble on top of all apps.
+  if (!serviceActive || isNativeOverlayActive()) return null;
 
   return (
     <GestureDetector gesture={composed}>
