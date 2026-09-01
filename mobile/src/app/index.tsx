@@ -122,7 +122,7 @@ export default function IndexScreen() {
             }}
           >
             <Image
-              source={require("../../assets/snapshot_icon.png")}
+              source={require("../../assets/icon.png")}
               style={{ width: 48, height: 48 }}
               resizeMode="contain"
             />
