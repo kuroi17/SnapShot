@@ -45,7 +45,11 @@
     "extra": {
       "router": {
         "origin": false
+      },
+      "eas": {
+        "projectId": "34eef1cf-d138-40cd-abed-b52ec3ea7fa2"
       }
-    }
+    },
+    "owner": "klythompsonchi"
   }
 }
