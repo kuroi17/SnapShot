@@ -80,13 +80,15 @@ export default function IndexScreen() {
   const { showToast } = useToast();
   const { serviceActive, startService, stopService } = useService();
 
-  const handleToggle = () => {
+  const handleToggle = async () => {
     if (serviceActive) {
-      stopService();
+      await stopService();
       showToast("Service stopped.", "error");
     } else {
-      startService();
-      showToast("Service started — capture bubble is active!", "success");
+      const started = await startService();
+      if (started) {
+        showToast("Service started — capture bubble is active!", "success");
+      }
     }
   };
 
