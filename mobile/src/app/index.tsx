@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { View, Text, ScrollView, Pressable, Platform, Image } from "react-native";
 import Animated, {
   useAnimatedStyle,
@@ -7,6 +6,7 @@ import Animated, {
 } from "react-native-reanimated";
 import { Win95Window } from "../components/ui/Win95Window";
 import { useToast } from "../services/ToastContext";
+import { useService } from "../services/ServiceContext";
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
@@ -33,7 +33,7 @@ function ServiceButton({
   return (
     <AnimatedPressable
       onPressIn={() => {
-        scale.value = withSpring(0.97, { stiffness: 300, damping: 20 });
+        scale.value = withSpring(0.98, { stiffness: 300, damping: 20 });
         bevel.value = 1;
       }}
       onPressOut={() => {
@@ -41,14 +41,14 @@ function ServiceButton({
         bevel.value = 0;
       }}
       onPress={onPress}
-      style={[animStyle, { flex: 1, backgroundColor: "#d4d0c8" }]}
+      style={[animStyle, { width: "100%", backgroundColor: active ? "#e6ded1" : "#d4d0c8" }]}
     >
       <Animated.View
         style={[
           bevelStyle,
           {
-            paddingVertical: 10,
-            paddingHorizontal: 16,
+            paddingVertical: 12,
+            paddingHorizontal: 20,
             alignItems: "center",
             justifyContent: "center",
             borderWidth: 2,
@@ -57,9 +57,9 @@ function ServiceButton({
       >
         <Text
           style={{
-            fontSize: 12,
+            fontSize: 13,
             fontWeight: "700",
-            color: active ? "#0a0a0a" : "#111111",
+            color: active ? "#b91c1c" : "#111111",
             letterSpacing: 0.3,
           }}
         >
@@ -78,16 +78,18 @@ const FEATURES = [
 
 export default function IndexScreen() {
   const { showToast } = useToast();
-  const [serviceActive, setServiceActive] = useState(false);
+  const { serviceActive, startService, stopService } = useService();
 
-  const handleStart = () => {
-    setServiceActive(true);
-    showToast("Service started — capture bubble is active!", "success");
-  };
-
-  const handleStop = () => {
-    setServiceActive(false);
-    showToast("Service stopped.", "error");
+  const handleToggle = async () => {
+    if (serviceActive) {
+      await stopService();
+      showToast("Service stopped.", "error");
+    } else {
+      const started = await startService();
+      if (started) {
+        showToast("Service started — capture bubble is active!", "success");
+      }
+    }
   };
 
   return (
@@ -122,7 +124,7 @@ export default function IndexScreen() {
             }}
           >
             <Image
-              source={require("../../assets/snapshot_icon.png")}
+              source={require("../../assets/icon.png")}
               style={{ width: 48, height: 48 }}
               resizeMode="contain"
             />
@@ -214,17 +216,12 @@ export default function IndexScreen() {
               : "Tap Start Service to activate the floating capture bubble over other apps."}
           </Text>
 
-          {/* Action Buttons */}
-          <View style={{ flexDirection: "row", gap: 8 }}>
+          {/* Single Dynamic Action Button */}
+          <View style={{ width: "100%" }}>
             <ServiceButton
-              label="Start Service"
+              label={serviceActive ? "Stop Service" : "Start Service"}
               active={serviceActive}
-              onPress={handleStart}
-            />
-            <ServiceButton
-              label="Stop Service"
-              active={!serviceActive}
-              onPress={handleStop}
+              onPress={handleToggle}
             />
           </View>
         </Win95Window>

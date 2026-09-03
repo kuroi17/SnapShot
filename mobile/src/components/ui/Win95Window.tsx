@@ -39,7 +39,7 @@ export function Win95Window({ title, icon, showIcon = true, children, className 
         {/* Logo Icon */}
         {showIcon && !icon && (
           <Image
-            source={require("../../../assets/snapshot_icon.png")}
+            source={require("../../../assets/icon.png")}
             style={{ width: 16, height: 16 }}
             resizeMode="contain"
           />
